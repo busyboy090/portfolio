@@ -1124,7 +1124,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---------------- CAREER CHRONOLOGY (LEFT-ALIGNED) ---------------- */}
+      {/* ---------------- CAREER CHRONOLOGY (LEFT-ALIGNED & UNIQUE KEYS) ---------------- */}
       <section className="py-28 px-6 sm:px-12 border-t border-zinc-800/60" id="experience">
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -1154,7 +1154,7 @@ export default function Home() {
           >
             {EXPERIENCE.map((item) => (
               <motion.div
-                key={item.role}
+                key={`${item.company}-${item.role}-${item.period}`}
                 variants={fadeInUp}
                 whileHover={{ y: -3 }}
                 transition={{ duration: 0.25 }}
@@ -1225,7 +1225,7 @@ export default function Home() {
               </div>
               {EDUCATION.map((edu) => (
                 <motion.div
-                  key={edu.degree}
+                  key={`${edu.institution}-${edu.degree}`}
                   whileHover={{ y: -3 }}
                   transition={{ duration: 0.25 }}
                   className="p-8 rounded-xl border border-zinc-800/80 bg-zinc-950/40 hover:border-zinc-700/80 transition-all"
@@ -1248,7 +1248,7 @@ export default function Home() {
               </div>
               {CERTIFICATIONS.map((cert) => (
                 <motion.div
-                  key={cert.name}
+                  key={cert.credentialId}
                   whileHover={{ y: -3 }}
                   transition={{ duration: 0.25 }}
                   className="p-6 rounded-xl border border-zinc-800/80 bg-zinc-950/40 hover:border-zinc-700/80 transition-all"
