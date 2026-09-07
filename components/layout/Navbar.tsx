@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import Logo from "@/public/logo.png";
 
 const NAV_LINKS = [
   { name: "Home", href: "/" },
@@ -44,9 +46,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 sm:px-12 flex justify-between items-center h-20">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center group">
-          <span className="text-lg font-bold tracking-tight text-white group-hover:text-purple-300 transition-colors">
-            Busayo Ale
-          </span>
+          <Image src={Logo} alt="Busayo Ale" className="w-14 h-14 rounded-full text-white bg-white" width={100} height={100} />
         </Link>
 
         {/* Desktop Links */}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -15,7 +15,7 @@ import {
   Upload,
   ImageIcon,
 } from "lucide-react";
-import { PROJECTS } from "@/data/portfolio";
+import { createClient } from "@/lib/client";
 
 export interface ProjectItem {
   id: string;
@@ -27,6 +27,35 @@ export interface ProjectItem {
   type: "wave" | "grid" | "nodes";
   imageUrl?: string;
   published: boolean;
+}
+
+// Row shape as it actually comes back from Postgres (snake_case),
+// mapped to/from the camelCase ProjectItem the UI already expects.
+function fromRow(row: any): ProjectItem {
+  return {
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    description: row.description,
+    tags: row.tags ?? [],
+    stats: row.stats,
+    type: (row.type as "wave" | "grid" | "nodes") || "wave",
+    imageUrl: row.image_url ?? "",
+    published: row.published,
+  };
+}
+
+function toRow(item: Partial<ProjectItem>) {
+  const row: Record<string, unknown> = {};
+  if (item.title !== undefined) row.title = item.title;
+  if (item.category !== undefined) row.category = item.category;
+  if (item.description !== undefined) row.description = item.description;
+  if (item.tags !== undefined) row.tags = item.tags;
+  if (item.stats !== undefined) row.stats = item.stats;
+  if (item.type !== undefined) row.type = item.type;
+  if (item.imageUrl !== undefined) row.image_url = item.imageUrl;
+  if (item.published !== undefined) row.published = item.published;
+  return row;
 }
 
 // ==========================================
@@ -77,13 +106,10 @@ function ProjectSchematic({ type }: { type: string }) {
 // MAIN CMS PAGE
 // ==========================================
 export default function ManageProjectsPage() {
-  const [projects, setProjects] = useState<ProjectItem[]>(() =>
-    PROJECTS.map((p) => ({
-      ...p,
-      type: (p.type as "wave" | "grid" | "nodes") || "wave",
-      published: true,
-    }))
-  );
+  const supabase = useMemo(() => createClient(), []);
+
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("All");
@@ -111,6 +137,32 @@ export default function ManageProjectsPage() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("sort_order", { ascending: true });
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error(error);
+        showToast("Failed to load projects");
+      } else {
+        setProjects((data ?? []).map(fromRow));
+      }
+      setIsLoading(false);
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
 
   const filteredProjects = useMemo(() => {
     return projects.filter((item) => {
@@ -145,37 +197,79 @@ export default function ManageProjectsPage() {
     setIsModalOpen(true);
   };
 
-  // Image Upload Handler (converts to base64 preview or stores file)
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Image Upload Handler — uploads to the project-images Storage bucket
+  // and stores the resulting public URL instead of a base64 blob.
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 3 * 1024 * 1024) {
-        alert("File size exceeds 3MB limit.");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormState((prev) => ({ ...prev, imageUrl: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      alert("File size exceeds 3MB limit.");
+      return;
     }
+
+    setIsUploadingImage(true);
+
+    const ext = file.name.split(".").pop();
+    const path = `${crypto.randomUUID()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("project-images")
+      .upload(path, file, { upsert: false });
+
+    if (uploadError) {
+      console.error(uploadError);
+      showToast("Image upload failed");
+      setIsUploadingImage(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from("project-images").getPublicUrl(path);
+
+    setFormState((prev) => ({ ...prev, imageUrl: data.publicUrl }));
+    setIsUploadingImage(false);
   };
 
-  const handleTogglePublish = (id: string) => {
+  const handleTogglePublish = async (id: string) => {
+    const target = projects.find((p) => p.id === id);
+    if (!target) return;
+    const nextPublished = !target.published;
+
+    const { error } = await supabase
+      .from("projects")
+      .update({ published: nextPublished })
+      .eq("id", id);
+
+    if (error) {
+      console.error(error);
+      showToast("Failed to update visibility");
+      return;
+    }
+
     setProjects((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, published: !p.published } : p))
+      prev.map((p) => (p.id === id ? { ...p, published: nextPublished } : p))
     );
     showToast("Updated visibility status");
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to remove this project?")) {
-      setProjects((prev) => prev.filter((p) => p.id !== id));
-      showToast("Project deleted successfully");
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to remove this project?")) return;
+
+    const { error } = await supabase.from("projects").delete().eq("id", id);
+
+    if (error) {
+      console.error(error);
+      showToast("Failed to delete project");
+      return;
     }
+
+    setProjects((prev) => prev.filter((p) => p.id !== id));
+    showToast("Project deleted successfully");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formState.title || !formState.description) {
       alert("Title and description are required.");
@@ -183,25 +277,47 @@ export default function ManageProjectsPage() {
     }
 
     if (editingProject) {
-      setProjects((prev) =>
-        prev.map((p) => (p.id === editingProject.id ? ({ ...p, ...formState } as ProjectItem) : p))
-      );
-      showToast(`Updated "${formState.title}"`);
+      const { data, error } = await supabase
+        .from("projects")
+        .update(toRow(formState))
+        .eq("id", editingProject.id)
+        .select()
+        .single();
+
+      if (error || !data) {
+        console.error(error);
+        showToast("Failed to update project");
+        return;
+      }
+
+      const updated = fromRow(data);
+      setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      showToast(`Updated "${updated.title}"`);
     } else {
-      const nextId = String(projects.length + 1).padStart(2, "0");
-      const newProj: ProjectItem = {
-        id: nextId,
-        title: formState.title!,
-        category: formState.category || "Full Stack",
-        description: formState.description!,
-        tags: formState.tags || [],
-        stats: formState.stats || "Production Ready",
-        type: formState.type || "wave",
-        imageUrl: formState.imageUrl || "",
-        published: formState.published ?? true,
-      };
-      setProjects((prev) => [newProj, ...prev]);
-      showToast(`Added "${newProj.title}"`);
+      const { data, error } = await supabase
+        .from("projects")
+        .insert({
+          title: formState.title!,
+          category: formState.category || "Full Stack",
+          description: formState.description!,
+          tags: formState.tags || [],
+          stats: formState.stats || "Production Ready",
+          type: formState.type || "wave",
+          image_url: formState.imageUrl || "",
+          published: formState.published ?? true,
+        })
+        .select()
+        .single();
+
+      if (error || !data) {
+        console.error(error);
+        showToast("Failed to create project");
+        return;
+      }
+
+      const created = fromRow(data);
+      setProjects((prev) => [created, ...prev]);
+      showToast(`Added "${created.title}"`);
     }
 
     setIsModalOpen(false);
@@ -311,6 +427,20 @@ export default function ManageProjectsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
+                {isLoading && (
+                  <tr>
+                    <td colSpan={7} className="p-6 text-center text-zinc-500 font-mono text-[11px]">
+                      Loading projects...
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && filteredProjects.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="p-6 text-center text-zinc-500 font-mono text-[11px]">
+                      No projects yet — click "New Project" to add one.
+                    </td>
+                  </tr>
+                )}
                 {filteredProjects.map((project) => (
                   <tr key={project.id} className="hover:bg-zinc-900/30 transition-colors">
                     <td className="p-4">
@@ -549,13 +679,17 @@ export default function ManageProjectsPage() {
                     </div>
                   ) : (
                     <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className="border border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 rounded-xl p-5 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2"
+                      onClick={() => !isUploadingImage && fileInputRef.current?.click()}
+                      className={`border border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 rounded-xl p-5 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2 ${
+                        isUploadingImage ? "opacity-60 pointer-events-none" : ""
+                      }`}
                     >
                       <div className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400">
                         <Upload className="w-4 h-4 text-purple-400" />
                       </div>
-                      <span className="text-zinc-300 font-medium text-xs">Click to upload screenshot</span>
+                      <span className="text-zinc-300 font-medium text-xs">
+                        {isUploadingImage ? "Uploading..." : "Click to upload screenshot"}
+                      </span>
                       <span className="text-zinc-500 text-[10px]">PNG, JPG, WebP up to 3MB</span>
                     </div>
                   )}
