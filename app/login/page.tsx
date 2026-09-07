@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/components/context/AuthProvider";
+import { signIn } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { 
   Eye, 
@@ -12,11 +12,9 @@ import {
   AlertCircle, 
   Loader2, 
   ArrowRight,
-  ShieldCheck
 } from "lucide-react";
 
 export default function LoginPage() {
-  const { signIn } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
