@@ -11,7 +11,9 @@ import {
   GraduationCap, 
   ExternalLink,
   Menu,
-  X
+  X,
+  MessageSquare,
+  Settings,
 } from "lucide-react";
 
 // Context to share open/close state between trigger and drawer
@@ -28,7 +30,8 @@ const NAV_ITEMS = [
   { label: "Projects", href: "/admin/projects", icon: FolderKanban },
   { label: "Experience", href: "/admin/experience", icon: Briefcase },
   { label: "Skills", href: "/admin/skills", icon: Sparkles },
-  { label: "Credentials", href: "/admin/credentials", icon: GraduationCap },
+  { label: "Messages", href: "/admin/messages", icon: MessageSquare },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 /** The hamburger button to place inside the header */
