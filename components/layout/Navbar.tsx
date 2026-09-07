@@ -12,32 +12,34 @@ const NAV_LINKS = [
   { name: "Work", href: "/work" },
   { name: "Expertise", href: "/expertise" },
   { name: "Experience", href: "/experience" },
-  { name: "Contact", href: "/contact" },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Close the mobile menu whenever the route changes
+  // Close mobile menu on route change
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
 
-  // Lock body scroll when mobile menu is active
+  // Lock body scroll completely when mobile menu is active
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
     } else {
       document.body.style.overflow = "unset";
+      document.body.style.touchAction = "auto";
     }
     return () => {
       document.body.style.overflow = "unset";
+      document.body.style.touchAction = "auto";
     };
   }, [isOpen]);
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-[#030305]/80 backdrop-blur-md border-b border-zinc-800/50">
+    <nav className="sticky top-0 z-50 w-full bg-[#030305] border-b border-zinc-800/80">
       <div className="max-w-7xl mx-auto px-6 sm:px-12 flex justify-between items-center h-20">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center group">
@@ -61,7 +63,7 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Desktop CTA */}
+        {/* Desktop Connect Button */}
         <div className="hidden md:block">
           <Link
             href="/contact"
@@ -76,50 +78,52 @@ export default function Navbar() {
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           aria-label={isOpen ? "Close Menu" : "Open Menu"}
-          className="md:hidden p-2 rounded-lg border border-zinc-800 bg-zinc-900/60 text-zinc-300 hover:text-white hover:border-zinc-700 transition-colors focus:outline-none"
+          className="md:hidden p-2.5 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-300 hover:text-white hover:border-zinc-700 transition-colors focus:outline-none"
         >
           {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
-      {/* Mobile Menu Dropdown Panel */}
+      {/* Full-screen Opaque Mobile Overlay */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="md:hidden border-b border-zinc-800/80 bg-[#07070a]/95 backdrop-blur-2xl overflow-hidden"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="md:hidden fixed inset-x-0 top-20 bottom-0 h-[calc(100dvh-5rem)] w-full bg-[#030305] z-50 flex flex-col justify-between px-6 py-8 overflow-y-auto"
           >
-            <div className="px-6 py-6 space-y-3">
+            {/* Nav Items */}
+            <div className="space-y-3">
               {NAV_LINKS.map((link) => {
                 const isActive = pathname === link.href;
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`flex items-center justify-between p-3 rounded-lg text-sm transition-colors ${
+                    className={`flex items-center justify-between p-4 rounded-xl text-base transition-colors ${
                       isActive
-                        ? "bg-zinc-900/80 text-white font-semibold border border-zinc-800"
-                        : "text-zinc-400 hover:text-white hover:bg-zinc-900/40"
+                        ? "bg-zinc-900 text-white font-semibold border border-zinc-800"
+                        : "text-zinc-400 hover:text-white hover:bg-zinc-900/60"
                     }`}
                   >
                     <span>{link.name}</span>
-                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />}
+                    {isActive && <span className="w-2 h-2 rounded-full bg-purple-400" />}
                   </Link>
                 );
               })}
+            </div>
 
-              <div className="pt-3 border-t border-zinc-800/60">
-                <Link
-                  href="/contact"
-                  className="w-full py-3 rounded-xl bg-zinc-100 hover:bg-white text-zinc-950 font-medium text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-white/5"
-                >
-                  <span>Connect Directly</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+            {/* Bottom Full-width Connect CTA */}
+            <div className="pt-6 border-t border-zinc-800/80 mt-auto">
+              <Link
+                href="/contact"
+                className="w-full py-4 rounded-xl bg-zinc-100 hover:bg-white text-zinc-950 font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-white/5 active:scale-[0.98]"
+              >
+                <span>Connect</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           </motion.div>
         )}

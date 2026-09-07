@@ -28,20 +28,20 @@ function LinkedinIcon({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
-function XTwitterIcon({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  );
-}
-
 function InstagramIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
       <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
       <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
+
+function XTwitterIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
     </svg>
   );
 }
@@ -317,7 +317,7 @@ export default function HomePage() {
         className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 py-12 md:py-20"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-          {/* Left Column: Heading, CTAs, & Socials */}
+          {/* Left Column: Heading, Continuous Animated Name, CTAs, & Socials */}
           <div className="lg:col-span-7 text-left">
             <motion.p
               initial={{ opacity: 0, y: 15 }}
@@ -328,14 +328,57 @@ export default function HomePage() {
               Hi, my name is
             </motion.p>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-100 to-zinc-400 mb-2 leading-[1.05]"
-            >
-              Busayo Ale.
-            </motion.h1>
+            {/* Continuous Ripple-Animated Name Header */}
+            <div className="relative inline-block mb-3 select-none">
+              {/* Continuous Pulsing Backdrop Aura */}
+              <motion.div
+                animate={{
+                  scale: [0.95, 1.12, 0.95],
+                  opacity: [0.25, 0.55, 0.25],
+                }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="absolute -inset-x-8 top-1/2 -translate-y-1/2 h-24 bg-gradient-to-r from-purple-600/30 via-cyan-500/25 to-blue-600/30 blur-3xl -z-10 pointer-events-none rounded-full"
+              />
+
+              <h1 className="flex flex-wrap items-baseline gap-x-4 leading-[1.05]">
+                {["Busayo", "Ale."].map((word, wordIndex) => {
+                  const baseCharIndex = wordIndex === 0 ? 0 : 6;
+                  return (
+                    <span key={wordIndex} className="inline-flex">
+                      {word.split("").map((char, charIndex) => {
+                        const totalIndex = baseCharIndex + charIndex;
+                        return (
+                          <motion.span
+                            key={charIndex}
+                            animate={{
+                              y: [0, -7, 0],
+                              filter: [
+                                "hue-rotate(0deg) drop-shadow(0 0 0px rgba(168,85,247,0))",
+                                "hue-rotate(35deg) drop-shadow(0 0 10px rgba(168,85,247,0.4))",
+                                "hue-rotate(0deg) drop-shadow(0 0 0px rgba(168,85,247,0))",
+                              ],
+                            }}
+                            transition={{
+                              duration: 3.4,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                              delay: totalIndex * 0.14,
+                            }}
+                            className="inline-block text-5xl sm:text-6xl md:text-8xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white via-zinc-100 to-purple-300"
+                          >
+                            {char}
+                          </motion.span>
+                        );
+                      })}
+                    </span>
+                  );
+                })}
+              </h1>
+            </div>
 
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
@@ -370,7 +413,7 @@ export default function HomePage() {
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </Link>
 
-              {/* Download CV Button */}
+              {/* Download CV */}
               <a
                 href="/resume.pdf"
                 download="Busayo_Ale_CV.pdf"
