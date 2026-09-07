@@ -11,7 +11,7 @@ import Logo from "@/public/logo.png";
 const NAV_LINKS = [
   { name: "Home", href: "/" },
   { name: "About", href: "/about" },
-  { name: "Work", href: "/work" },
+  { name: "Projects", href: "/projects" },
   { name: "Skills", href: "/skills" },
   { name: "Experience", href: "/experience" },
   { name: "Contact", href: "/contact" },
