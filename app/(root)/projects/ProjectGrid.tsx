@@ -86,16 +86,11 @@ export default function WorkGrid({ projects }: { projects: ProjectItem[] }) {
             ) : (
               <ProjectSchematic type={project.type} />
             )}
-            <div className="absolute top-4 right-4 text-xs font-medium px-2 py-1 rounded bg-zinc-900/80 border border-zinc-700/80 text-zinc-300">
-              {project.stats}
-            </div>
           </div>
 
           <div className="p-7 flex flex-col flex-grow justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-semibold text-zinc-300">{project.id}</span>
-                <span className="text-zinc-600 text-xs">—</span>
+              <div className="mb-3">
                 <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{project.category}</span>
               </div>
               <h3 className="text-lg font-bold text-white mb-3">{project.title}</h3>
