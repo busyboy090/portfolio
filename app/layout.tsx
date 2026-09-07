@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/components/context/AuthProvider";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -37,7 +38,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background text-on-background min-h-screen font-body-md text-body-md overflow-x-hidden">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
