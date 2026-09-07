@@ -79,7 +79,7 @@ function Linkedin({ className = "w-3.5 h-3.5" }: { className?: string }) {
 
 const TECH_CATEGORIES = [
   {
-    category: "Frontend & UI Design",
+    category: "Frontend Development",
     icon: Layout,
     description: "Component architecture, design systems, and responsive pixel-perfect interfaces.",
     skills: [
@@ -130,18 +130,18 @@ const TECH_CATEGORIES = [
 const ABOUT_CARDS = [
   {
     icon: Code2,
-    title: "UI Design to Code",
-    description: "Translating wireframes and interactive Figma prototypes directly into fluid, pixel-perfect Next.js and React components.",
+    title: "Frontend Development",
+    description: "Crafting fluid, accessible, and high-performance client applications using Next.js, React, TypeScript, and modern CSS.",
   },
   {
     icon: Database,
-    title: "Backend & System Design",
-    description: "Developing robust APIs in Node.js/NestJS, optimizing relational query speeds in PostgreSQL, and configuring fast Redis caches.",
+    title: "Backend & Architecture",
+    description: "Architecting scalable RESTful APIs and microservices with Node.js and NestJS, backed by optimized PostgreSQL and Redis instances.",
   },
   {
     icon: Rocket,
-    title: "Production Lifecycle",
-    description: "Taking full ownership of products—from database schema definitions to continuous deployment, automated tests, and cloud monitoring.",
+    title: "DevOps & Cloud Delivery",
+    description: "Deploying and managing reliable cloud environments using Docker, CI/CD automation, and cloud platforms for maximum uptime.",
   },
 ];
 
@@ -155,12 +155,12 @@ const SKILL_MODULES = [
     tags: ["App Router", "RSC", "Turbopack", "Hydration Fixes"],
   },
   {
-    title: "Figma & UI Systems",
-    metric: "Pixel-Perfect Sync",
-    category: "Product & UI/UX Design",
+    title: "TypeScript & Tooling",
+    metric: "Strict Type Safety",
+    category: "Type Architecture",
     description:
-      "Creating accessible design tokens, component libraries, and interactive wireframes that convert smoothly into code.",
-    tags: ["Auto-Layout", "Design Tokens", "Wireframing", "Prototypes"],
+      "Reusable generic utilities, Zod schema validation, and end-to-end typed API contracts.",
+    tags: ["Zod", "Generics", "Type Narrowing", "Branded Types"],
   },
   {
     title: "NestJS & Node Services",
@@ -219,7 +219,7 @@ const EXPERIENCE = [
     company: "TechNova Solutions",
     period: "2022 — PRESENT",
     description:
-      "Building and maintaining production-grade web applications. Modernizing core APIs using NestJS and Node.js, prototyping interfaces in Figma, and delivering responsive Next.js client dashboards.",
+      "Building and maintaining production-grade web applications. Modernizing core APIs using NestJS and Node.js, prototyping interfaces in Figma, and delivering responsive Next.js client dashboards with reduced query latency.",
     technologies: ["Next.js", "NestJS", "PostgreSQL", "Figma", "Docker", "AWS"],
   },
   {
@@ -227,7 +227,7 @@ const EXPERIENCE = [
     company: "Digital Frontier",
     period: "2020 — 2022",
     description:
-      "Engineered full-stack features from conception to release. Designed relational schemas, created clean REST APIs in Express/Node.js, and converted Figma UI specs into responsive interfaces with React and Tailwind CSS.",
+      "Engineered full-stack features from conception to release. Designed relational schemas, created clean REST APIs in Express/Node.js, and converted UI specs into responsive interfaces with React and Tailwind CSS.",
     technologies: ["React", "Node.js", "Express", "PostgreSQL", "Figma", "CI/CD"],
   },
 ];
@@ -681,13 +681,14 @@ function UnifiedHeroNav() {
             Full Stack Developer
           </motion.h2>
 
+          {/* New refined tagline */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.4 }}
             className="text-base sm:text-lg md:text-xl text-zinc-400 max-w-2xl mb-8 font-light leading-relaxed"
           >
-            With 4+ years of building full-stack applications, I bridge user-focused Figma designs with clean, reliable backend architectures.
+            Architecting modern web applications with clean, maintainable code. Specializing in responsive frontend experiences, high-throughput APIs, and reliable database systems.
           </motion.p>
 
           <motion.div
@@ -759,13 +760,13 @@ function AboutSection() {
             className="lg:col-span-7 space-y-5 text-zinc-300 font-light text-base leading-relaxed"
           >
             <motion.p variants={fadeInUp}>
-              I am a <strong className="text-white font-semibold">Full Stack Developer</strong> with over 4 years of hands-on experience designing, developing, and deploying web applications. I combine academic software engineering principles with modern production practices—bridging intuitive design in <strong className="text-zinc-100 font-semibold">Figma</strong> with Next.js/React frontend engineering and performant Node.js/NestJS backend services.
+              I am a <strong className="text-white font-semibold">Full Stack Developer</strong> with over 4 years of hands-on experience designing, developing, and deploying modern web applications. I combine academic software engineering principles with production practices—building responsive, fluid frontends in Next.js and React, backed by scalable backend services in Node.js and NestJS.
             </motion.p>
             <motion.p variants={fadeInUp}>
-              Over the course of my career, I’ve worked on everything from component systems and real-time dashboards to multi-tenant e-commerce platforms and relational databases. Because I design in Figma and code across the stack, I eliminate the friction between concept and execution—ensuring responsive layouts, accessibility, and smooth user interactions.
+              Over the course of my career, I’ve delivered production code across interactive client interfaces, real-time dashboards, and multi-tenant applications. I take an end-to-end approach to engineering: ensuring clean UI architecture, well-structured relational databases, and dependable API contracts.
             </motion.p>
             <motion.p variants={fadeInUp}>
-              Whether prototyping a fresh interface, optimizing database queries, or deploying microservices, I prioritize clean code architecture, type safety, and fast load times across every device.
+              Whether building an application from scratch, modernizing existing codebases, or tuning database query profiles, I prioritize developer ergonomics, strict type safety, and fast performance across every viewport.
             </motion.p>
           </motion.div>
 
@@ -784,7 +785,7 @@ function AboutSection() {
               <span className="text-3xl font-extrabold text-white">4+</span>
               <div className="mt-4">
                 <div className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Years Experience</div>
-                <div className="text-[11px] text-zinc-500 font-light mt-1">Full-stack web & UI engineering</div>
+                <div className="text-[11px] text-zinc-500 font-light mt-1">Full-stack web engineering</div>
               </div>
             </motion.div>
 
@@ -792,10 +793,10 @@ function AboutSection() {
               variants={scaleIn}
               className="p-6 rounded-xl border border-zinc-800/80 bg-zinc-950/50 flex flex-col justify-between"
             >
-              <span className="text-3xl font-extrabold text-purple-400">Design + Dev</span>
+              <span className="text-3xl font-extrabold text-purple-400">Full-Stack</span>
               <div className="mt-4">
-                <div className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Figma to Code</div>
-                <div className="text-[11px] text-zinc-500 font-light mt-1">Design systems & clean components</div>
+                <div className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Production Ready</div>
+                <div className="text-[11px] text-zinc-500 font-light mt-1">From design specs to deployment</div>
               </div>
             </motion.div>
 
@@ -809,22 +810,22 @@ function AboutSection() {
               <ul className="space-y-2 text-xs text-zinc-400 font-light">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                  <span>Interactive Figma prototypes translated cleanly into React/Next.js</span>
+                  <span>Fluid, accessible, component-driven user interfaces in React & Next.js</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                  <span>Modular REST APIs & microservices built on Node.js/NestJS</span>
+                  <span>Scalable REST APIs and microservices built on Node.js and NestJS</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                  <span>Efficient relational database schema design & indexing in PostgreSQL</span>
+                  <span>Reliable database schema design, migration strategies, and indexing</span>
                 </li>
               </ul>
             </motion.div>
           </motion.div>
         </div>
 
-        {/* 3 Core Pillars */}
+        {/* 3 Standard Engineering Pillars */}
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -958,7 +959,7 @@ export default function Home() {
       {/* Hero with clean static navbar */}
       <UnifiedHeroNav />
 
-      {/* Expanded About Me */}
+      {/* About Me Section */}
       <AboutSection />
 
       {/* Technologies & Tools */}
@@ -1124,7 +1125,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---------------- CAREER CHRONOLOGY (LEFT-ALIGNED & UNIQUE KEYS) ---------------- */}
+      {/* ---------------- CAREER CHRONOLOGY ---------------- */}
       <section className="py-28 px-6 sm:px-12 border-t border-zinc-800/60" id="experience">
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -1189,7 +1190,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---------------- CREDENTIALS & EDUCATION (LEFT-ALIGNED) ---------------- */}
+      {/* ---------------- CREDENTIALS & EDUCATION ---------------- */}
       <section className="py-28 px-6 sm:px-12 border-t border-zinc-800/60" id="credentials">
         <div className="max-w-7xl mx-auto">
           <motion.div
