@@ -9,7 +9,7 @@ export default async function ExperiencePage() {
   const supabase = await createClient();
 
   const [workRes, eduRes, certRes] = await Promise.all([
-    supabase.from("work_experience").select("*").order("created_at", { ascending: false }),
+    supabase.from("experience").select("*").order("created_at", { ascending: false }),
     supabase.from("education").select("*").order("created_at", { ascending: false }),
     supabase.from("certifications").select("*").order("created_at", { ascending: false }),
   ]);
