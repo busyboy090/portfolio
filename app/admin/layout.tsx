@@ -11,7 +11,7 @@ export default async function AdminLayout({
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect("/login");
+    redirect("/auth/login");
   }
 
   return (
@@ -35,7 +35,7 @@ export default async function AdminLayout({
 
             {/* Right Header Section: User info + Sign Out */}
             <div className="flex items-center gap-3 sm:gap-4">
-              <div className="text-right hidden sm:block max-w-[180px] md:max-w-xs">
+              <div className="text-right hidden sm:block max-w-45 md:max-w-xs">
                 <span className="block text-xs font-medium text-zinc-200 truncate">
                   {user.email}
                 </span>

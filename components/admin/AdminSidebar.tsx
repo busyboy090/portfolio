@@ -15,6 +15,8 @@ import {
   MessageSquare,
   Settings,
 } from "lucide-react";
+import Image from "next/image";
+import Logo from "@/public/logo.png";
 
 // Context to share open/close state between trigger and drawer
 const SidebarContext = createContext<{
@@ -64,9 +66,7 @@ export default function AdminSidebarProvider({
       <div>
         {/* Brand / Logo */}
         <div className="flex items-center gap-3 px-2 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 font-bold text-sm shrink-0">
-            BA
-          </div>
+          <Image src={Logo} alt="Logo" className="w-8 h-8 rounded-lg" />
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-white tracking-tight truncate">Admin Console</h2>
             <p className="text-[11px] text-zinc-500 truncate">Portfolio Studio</p>
