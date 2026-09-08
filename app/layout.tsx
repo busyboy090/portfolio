@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   title: "Busayo - Full-Stack Developer",
   description:
     "I engineer high-performance web applications with precision and scale in mind. Specializing in modern JavaScript ecosystems and robust backend architectures.",
+  icons: {
+    icon: "/logo-white-bg.png"
+  }
 };
 
 export default function RootLayout({
@@ -37,6 +40,8 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
         />
+
+        <link rel="stylesheet" href="" />
       </head>
       <body
         suppressHydrationWarning
