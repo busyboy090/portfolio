@@ -58,6 +58,19 @@ function toRow(item: Partial<ProjectItem>) {
   return row;
 }
 
+// Pulls the storage object path back out of a project-images public URL,
+// e.g. ".../storage/v1/object/public/project-images/<path>" -> "<path>".
+// Returns null for anything that isn't one of our own uploaded files
+// (empty string, external URL, etc.) so we never try to delete something
+// we didn't upload.
+function extractStoragePath(url: string | undefined): string | null {
+  if (!url) return null;
+  const marker = "/project-images/";
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  return url.slice(idx + marker.length);
+}
+
 // ==========================================
 // SCHEMATIC FALLBACK COMPONENT
 // ==========================================
@@ -212,6 +225,8 @@ export default function ManageProjectsPage() {
 
     setIsUploadingImage(true);
 
+    const previousUrl = formState.imageUrl;
+
     const ext = file.name.split(".").pop();
     const path = `${crypto.randomUUID()}.${ext}`;
 
@@ -230,6 +245,26 @@ export default function ManageProjectsPage() {
 
     setFormState((prev) => ({ ...prev, imageUrl: data.publicUrl }));
     setIsUploadingImage(false);
+
+    // Clean up the file this one replaced, now that the new upload succeeded.
+    const previousPath = extractStoragePath(previousUrl);
+    if (previousPath) {
+      const { error: removeError } = await supabase.storage.from("project-images").remove([previousPath]);
+      if (removeError) console.error(removeError);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    const path = extractStoragePath(formState.imageUrl);
+    setFormState((prev) => ({ ...prev, imageUrl: "" }));
+    if (path) {
+      supabase.storage
+        .from("project-images")
+        .remove([path])
+        .then(({ error }) => {
+          if (error) console.error(error);
+        });
+    }
   };
 
   const handleTogglePublish = async (id: string) => {
@@ -257,6 +292,8 @@ export default function ManageProjectsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to remove this project?")) return;
 
+    const target = projects.find((p) => p.id === id);
+
     const { error } = await supabase.from("projects").delete().eq("id", id);
 
     if (error) {
@@ -267,6 +304,14 @@ export default function ManageProjectsPage() {
 
     setProjects((prev) => prev.filter((p) => p.id !== id));
     showToast("Project deleted successfully");
+
+    // Best-effort cleanup — the row is already gone either way, so we
+    // just log if this fails rather than surfacing another toast.
+    const path = extractStoragePath(target?.imageUrl);
+    if (path) {
+      const { error: storageError } = await supabase.storage.from("project-images").remove([path]);
+      if (storageError) console.error(storageError);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -670,7 +715,7 @@ export default function ManageProjectsPage() {
                       />
                       <button
                         type="button"
-                        onClick={() => setFormState({ ...formState, imageUrl: "" })}
+                        onClick={handleRemoveImage}
                         className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/80 text-rose-400 hover:text-white hover:bg-rose-600 transition-colors"
                         title="Remove Image"
                       >
