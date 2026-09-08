@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail,
@@ -19,9 +19,10 @@ import {
   Inbox,
   CornerUpLeft,
 } from "lucide-react";
+import { createClient } from "@/lib/client";
 
 // ==========================================
-// TYPES & MOCK DATA
+// TYPES
 // ==========================================
 
 export interface ContactMessage {
@@ -37,51 +38,30 @@ export interface ContactMessage {
   archived: boolean;
 }
 
-const INITIAL_MESSAGES: ContactMessage[] = [
-  {
-    id: "msg-001",
-    senderName: "Alexander Vance",
-    senderEmail: "alex.vance@fintech-ventures.io",
-    subject: "Full-Time Senior Full-Stack Role // High-Frequency Dashboard",
-    message:
-      "Hi Busayo, I reviewed your Fintech Analytics Dashboard project and was deeply impressed by your sub-millisecond WebSocket handling and custom Canvas layers. We are scaling our real-time core platform team and would love to set up an introductory technical chat with you this week. Let me know if you are open to discussing opportunities.",
-    createdAt: "Today at 2:45 PM",
-    read: false,
-    replied: false,
-    starred: true,
-    archived: false,
-  },
-  {
-    id: "msg-002",
-    senderName: "Elena Rostova",
-    senderEmail: "elena@digitalcrafts.agency",
-    subject: "Contract Opportunity: Next.js 19 + NestJS Architecture",
-    message:
-      "Hello Busayo, our agency is looking for a senior engineer to audit our microservices architecture and rebuild an edge storefront using React Server Components. We estimate this as a 3-month contract with immediate start. Could you share your current availability and standard hourly or project rates?",
-    createdAt: "Yesterday at 11:20 AM",
-    read: true,
-    replied: true,
-    starred: false,
-    archived: false,
-  },
-  {
-    id: "msg-003",
-    senderName: "Marcus Thorne",
-    senderEmail: "m.thorne@cloudscale.net",
-    subject: "Inquiry on Microservices Mesh & gRPC Gateway Project",
-    message:
-      "Hi Busayo, stumbled upon your portfolio while looking at rate-limiting implementations using Redis Lua scripts. I’d love to know more about the OpenTelemetry tracing overhead you experienced in production. Cheers!",
-    createdAt: "Sep 2, 2026",
-    read: true,
-    replied: false,
-    starred: false,
-    archived: false,
-  },
-];
+function fromRow(row: any): ContactMessage {
+  return {
+    id: row.id,
+    senderName: row.sender_name,
+    senderEmail: row.sender_email,
+    subject: row.subject,
+    message: row.message,
+    createdAt: new Date(row.created_at).toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }),
+    read: row.read,
+    replied: row.replied,
+    starred: row.starred,
+    archived: row.archived,
+  };
+}
 
 export default function MessagesDashboardPage() {
-  const [messages, setMessages] = useState<ContactMessage[]>(INITIAL_MESSAGES);
-  const [selectedId, setSelectedId] = useState<string>(INITIAL_MESSAGES[0]?.id || "");
+  const supabase = useMemo(() => createClient(), []);
+
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string>("");
   const [activeFilter, setActiveFilter] = useState<"all" | "unread" | "replied" | "archived">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -91,6 +71,34 @@ export default function MessagesDashboardPage() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error(error);
+        showToast("Failed to load messages");
+      } else {
+        const mapped = (data ?? []).map(fromRow);
+        setMessages(mapped);
+        setSelectedId(mapped[0]?.id || "");
+      }
+      setIsLoading(false);
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
 
   // Selected message detail
   const activeMessage = useMemo(() => {
@@ -123,31 +131,73 @@ export default function MessagesDashboardPage() {
       setMessages((prev) =>
         prev.map((m) => (m.id === msg.id ? { ...m, read: true } : m))
       );
+      supabase
+        .from("messages")
+        .update({ read: true })
+        .eq("id", msg.id)
+        .then(({ error }) => {
+          if (error) console.error(error);
+        });
     }
   };
 
-  const handleToggleStar = (id: string, e: React.MouseEvent) => {
+  const handleToggleStar = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setMessages((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, starred: !m.starred } : m))
-    );
+    const target = messages.find((m) => m.id === id);
+    if (!target) return;
+    const nextStarred = !target.starred;
+
+    const { error } = await supabase.from("messages").update({ starred: nextStarred }).eq("id", id);
+    if (error) {
+      console.error(error);
+      showToast("Failed to update message");
+      return;
+    }
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, starred: nextStarred } : m)));
   };
 
-  const handleToggleArchive = (id: string) => {
-    setMessages((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, archived: !m.archived } : m))
-    );
+  const handleToggleArchive = async (id: string) => {
+    const target = messages.find((m) => m.id === id);
+    if (!target) return;
+    const nextArchived = !target.archived;
+
+    const { error } = await supabase.from("messages").update({ archived: nextArchived }).eq("id", id);
+    if (error) {
+      console.error(error);
+      showToast("Failed to update archive status");
+      return;
+    }
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, archived: nextArchived } : m)));
     showToast("Message archive status updated");
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Permanently delete this inquiry?")) {
-      setMessages((prev) => prev.filter((m) => m.id !== id));
-      if (selectedId === id) {
-        setSelectedId(messages.filter((m) => m.id !== id)[0]?.id || "");
-      }
-      showToast("Message deleted");
+  const handleDelete = async (id: string) => {
+    if (!confirm("Permanently delete this inquiry?")) return;
+
+    const { error } = await supabase.from("messages").delete().eq("id", id);
+    if (error) {
+      console.error(error);
+      showToast("Failed to delete message");
+      return;
     }
+
+    setMessages((prev) => {
+      const next = prev.filter((m) => m.id !== id);
+      if (selectedId === id) {
+        setSelectedId(next[0]?.id || "");
+      }
+      return next;
+    });
+    showToast("Message deleted");
+  };
+
+  const handleMarkReplied = async (id: string) => {
+    const { error } = await supabase.from("messages").update({ replied: true }).eq("id", id);
+    if (error) {
+      console.error(error);
+      return;
+    }
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, replied: true } : m)));
   };
 
   const handleCopyEmail = (email: string) => {
@@ -249,7 +299,10 @@ export default function MessagesDashboardPage() {
             </div>
 
             <div className="divide-y divide-zinc-800/60 overflow-y-auto max-h-[600px] flex-1">
-              {filteredMessages.map((msg) => {
+              {isLoading && (
+                <div className="p-12 text-center text-zinc-500 font-mono text-xs">Loading messages...</div>
+              )}
+              {!isLoading && filteredMessages.map((msg) => {
                 const isSelected = selectedId === msg.id;
                 return (
                   <div
@@ -303,7 +356,7 @@ export default function MessagesDashboardPage() {
                 );
               })}
 
-              {filteredMessages.length === 0 && (
+              {!isLoading && filteredMessages.length === 0 && (
                 <div className="p-12 text-center text-zinc-500 font-mono text-xs">
                   No messages found in this view.
                 </div>
@@ -407,13 +460,7 @@ export default function MessagesDashboardPage() {
                     href={`mailto:${activeMessage.senderEmail}?subject=Re: ${encodeURIComponent(
                       activeMessage.subject
                     )}`}
-                    onClick={() => {
-                      setMessages((prev) =>
-                        prev.map((m) =>
-                          m.id === activeMessage.id ? { ...m, replied: true } : m
-                        )
-                      );
-                    }}
+                    onClick={() => handleMarkReplied(activeMessage.id)}
                     className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20 active:scale-95"
                   >
                     <Send className="w-3.5 h-3.5" />

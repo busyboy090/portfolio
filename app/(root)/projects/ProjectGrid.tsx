@@ -75,20 +75,22 @@ export default function WorkGrid({ projects }: { projects: ProjectItem[] }) {
           whileHover={{ y: -6 }}
           className="group relative rounded-xl border border-zinc-800/80 bg-zinc-950/40 hover:bg-zinc-900/30 hover:border-zinc-700 transition-colors duration-300 flex flex-col justify-between overflow-hidden"
         >
-          <div className="h-56 relative bg-gradient-to-b from-zinc-900/40 to-black/60 border-b border-zinc-800/60 flex items-center justify-center p-6 overflow-hidden">
+          <div className="relative aspect-video w-full bg-zinc-900 border-b border-zinc-800/60 overflow-hidden flex items-center justify-center">
             {project.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={project.imageUrl}
                 alt={project.title}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
               />
             ) : (
-              <ProjectSchematic type={project.type} />
+              <div className="p-6 w-full h-full flex items-center justify-center">
+                <ProjectSchematic type={project.type} />
+              </div>
             )}
           </div>
 
-          <div className="p-7 flex flex-col flex-grow justify-between">
+          <div className="p-7 flex flex-col grow justify-between">
             <div>
               <div className="mb-3">
                 <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{project.category}</span>
