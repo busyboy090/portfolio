@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Briefcase,
@@ -19,7 +19,7 @@ import {
   Calendar,
   Building2,
 } from "lucide-react";
-import { EXPERIENCE, EDUCATION, CERTIFICATIONS } from "@/data/portfolio";
+import { createClient } from "@/lib/client";
 
 // =========================================================================
 // TYPES
@@ -53,27 +53,56 @@ export interface CertificationRecord {
 
 type ActiveSection = "work" | "education" | "certifications";
 
+// Row <-> record mapping (DB columns are snake_case; credential_id is the
+// only field that differs in name from its UI counterpart).
+function fromWorkRow(row: any): WorkRecord {
+  return {
+    id: row.id,
+    role: row.role,
+    company: row.company,
+    period: row.period,
+    description: row.description,
+    technologies: row.technologies ?? [],
+  };
+}
+
+function fromEduRow(row: any): EducationRecord {
+  return {
+    id: row.id,
+    degree: row.degree,
+    institution: row.institution,
+    period: row.period,
+    details: row.details,
+  };
+}
+
+function fromCertRow(row: any): CertificationRecord {
+  return {
+    id: row.id,
+    name: row.name,
+    issuer: row.issuer,
+    year: row.year,
+    credentialId: row.credential_id,
+    description: row.description,
+  };
+}
+
 // =========================================================================
 // MAIN EXPERIENCE CMS DASHBOARD
 // =========================================================================
 
 export default function ExperienceCMSPage() {
+  const supabase = useMemo(() => createClient(), []);
+
   const [activeSection, setActiveSection] = useState<ActiveSection>("work");
   const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Lists initialized from static portfolio data
-  const [workList, setWorkList] = useState<WorkRecord[]>(() =>
-    EXPERIENCE.map((exp, idx) => ({ ...exp, id: `exp-${idx + 1}` }))
-  );
-
-  const [eduList, setEduList] = useState<EducationRecord[]>(() =>
-    EDUCATION.map((edu, idx) => ({ ...edu, id: `edu-${idx + 1}` }))
-  );
-
-  const [certList, setCertList] = useState<CertificationRecord[]>(() =>
-    CERTIFICATIONS.map((cert, idx) => ({ ...cert, id: `cert-${idx + 1}` }))
-  );
+  // Lists populated from Supabase on mount
+  const [workList, setWorkList] = useState<WorkRecord[]>([]);
+  const [eduList, setEduList] = useState<EducationRecord[]>([]);
+  const [certList, setCertList] = useState<CertificationRecord[]>([]);
 
   // Modal / Form States
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -114,6 +143,35 @@ export default function ExperienceCMSPage() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      const [workRes, eduRes, certRes] = await Promise.all([
+        supabase.from("work_experience").select("*").order("created_at", { ascending: false }),
+        supabase.from("education").select("*").order("created_at", { ascending: false }),
+        supabase.from("certifications").select("*").order("created_at", { ascending: false }),
+      ]);
+
+      if (!isMounted) return;
+
+      if (workRes.error || eduRes.error || certRes.error) {
+        console.error(workRes.error || eduRes.error || certRes.error);
+        showToast("Failed to load experience data");
+      } else {
+        setWorkList((workRes.data ?? []).map(fromWorkRow));
+        setEduList((eduRes.data ?? []).map(fromEduRow));
+        setCertList((certRes.data ?? []).map(fromCertRow));
+      }
+      setIsLoading(false);
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
 
   // =========================================================================
   // HANDLERS
@@ -168,85 +226,180 @@ export default function ExperienceCMSPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to remove this entry?")) return;
 
     if (activeSection === "work") {
+      const { error } = await supabase.from("work_experience").delete().eq("id", id);
+      if (error) {
+        console.error(error);
+        showToast("Failed to remove entry");
+        return;
+      }
       setWorkList((prev) => prev.filter((item) => item.id !== id));
       showToast("Work experience removed");
     } else if (activeSection === "education") {
+      const { error } = await supabase.from("education").delete().eq("id", id);
+      if (error) {
+        console.error(error);
+        showToast("Failed to remove entry");
+        return;
+      }
       setEduList((prev) => prev.filter((item) => item.id !== id));
       showToast("Academic record removed");
     } else {
+      const { error } = await supabase.from("certifications").delete().eq("id", id);
+      if (error) {
+        console.error(error);
+        showToast("Failed to remove entry");
+        return;
+      }
       setCertList((prev) => prev.filter((item) => item.id !== id));
       showToast("Certification removed");
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (activeSection === "work") {
       if (!workForm.role || !workForm.company) return;
+
       if (modalMode === "edit" && editingId) {
-        setWorkList((prev) =>
-          prev.map((item) =>
-            item.id === editingId ? ({ ...item, ...workForm } as WorkRecord) : item
-          )
-        );
-        showToast(`Updated "${workForm.role}"`);
+        const { data, error } = await supabase
+          .from("work_experience")
+          .update({
+            role: workForm.role,
+            company: workForm.company,
+            period: workForm.period || "",
+            description: workForm.description || "",
+            technologies: workForm.technologies || [],
+          })
+          .eq("id", editingId)
+          .select()
+          .single();
+
+        if (error || !data) {
+          console.error(error);
+          showToast("Failed to update entry");
+          return;
+        }
+        const updated = fromWorkRow(data);
+        setWorkList((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+        showToast(`Updated "${updated.role}"`);
       } else {
-        const newRecord: WorkRecord = {
-          id: `exp-${Date.now()}`,
-          role: workForm.role!,
-          company: workForm.company!,
-          period: workForm.period || "2024 — PRESENT",
-          description: workForm.description || "",
-          technologies: workForm.technologies || [],
-        };
-        setWorkList((prev) => [newRecord, ...prev]);
-        showToast(`Added "${newRecord.role}"`);
+        const { data, error } = await supabase
+          .from("work_experience")
+          .insert({
+            role: workForm.role!,
+            company: workForm.company!,
+            period: workForm.period || "2024 — PRESENT",
+            description: workForm.description || "",
+            technologies: workForm.technologies || [],
+          })
+          .select()
+          .single();
+
+        if (error || !data) {
+          console.error(error);
+          showToast("Failed to create entry");
+          return;
+        }
+        const created = fromWorkRow(data);
+        setWorkList((prev) => [created, ...prev]);
+        showToast(`Added "${created.role}"`);
       }
     } else if (activeSection === "education") {
       if (!eduForm.degree || !eduForm.institution) return;
+
       if (modalMode === "edit" && editingId) {
-        setEduList((prev) =>
-          prev.map((item) =>
-            item.id === editingId ? ({ ...item, ...eduForm } as EducationRecord) : item
-          )
-        );
-        showToast(`Updated "${eduForm.degree}"`);
+        const { data, error } = await supabase
+          .from("education")
+          .update({
+            degree: eduForm.degree,
+            institution: eduForm.institution,
+            period: eduForm.period || "",
+            details: eduForm.details || "",
+          })
+          .eq("id", editingId)
+          .select()
+          .single();
+
+        if (error || !data) {
+          console.error(error);
+          showToast("Failed to update entry");
+          return;
+        }
+        const updated = fromEduRow(data);
+        setEduList((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+        showToast(`Updated "${updated.degree}"`);
       } else {
-        const newRecord: EducationRecord = {
-          id: `edu-${Date.now()}`,
-          degree: eduForm.degree!,
-          institution: eduForm.institution!,
-          period: eduForm.period || "2022 — 2026",
-          details: eduForm.details || "",
-        };
-        setEduList((prev) => [newRecord, ...prev]);
-        showToast(`Added "${newRecord.degree}"`);
+        const { data, error } = await supabase
+          .from("education")
+          .insert({
+            degree: eduForm.degree!,
+            institution: eduForm.institution!,
+            period: eduForm.period || "2022 — 2026",
+            details: eduForm.details || "",
+          })
+          .select()
+          .single();
+
+        if (error || !data) {
+          console.error(error);
+          showToast("Failed to create entry");
+          return;
+        }
+        const created = fromEduRow(data);
+        setEduList((prev) => [created, ...prev]);
+        showToast(`Added "${created.degree}"`);
       }
     } else {
       if (!certForm.name || !certForm.issuer) return;
+
       if (modalMode === "edit" && editingId) {
-        setCertList((prev) =>
-          prev.map((item) =>
-            item.id === editingId ? ({ ...item, ...certForm } as CertificationRecord) : item
-          )
-        );
-        showToast(`Updated "${certForm.name}"`);
+        const { data, error } = await supabase
+          .from("certifications")
+          .update({
+            name: certForm.name,
+            issuer: certForm.issuer,
+            year: certForm.year || "",
+            credential_id: certForm.credentialId || "",
+            description: certForm.description || "",
+          })
+          .eq("id", editingId)
+          .select()
+          .single();
+
+        if (error || !data) {
+          console.error(error);
+          showToast("Failed to update entry");
+          return;
+        }
+        const updated = fromCertRow(data);
+        setCertList((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+        showToast(`Updated "${updated.name}"`);
       } else {
-        const newRecord: CertificationRecord = {
-          id: `cert-${Date.now()}`,
-          name: certForm.name!,
-          issuer: certForm.issuer!,
-          year: certForm.year || "2024",
-          credentialId: certForm.credentialId || "VERIFIED-ID",
-          description: certForm.description || "",
-        };
-        setCertList((prev) => [newRecord, ...prev]);
-        showToast(`Added "${newRecord.name}"`);
+        const { data, error } = await supabase
+          .from("certifications")
+          .insert({
+            name: certForm.name!,
+            issuer: certForm.issuer!,
+            year: certForm.year || "2024",
+            credential_id: certForm.credentialId || "VERIFIED-ID",
+            description: certForm.description || "",
+          })
+          .select()
+          .single();
+
+        if (error || !data) {
+          console.error(error);
+          showToast("Failed to create entry");
+          return;
+        }
+        const created = fromCertRow(data);
+        setCertList((prev) => [created, ...prev]);
+        showToast(`Added "${created.name}"`);
       }
     }
 
@@ -472,7 +625,14 @@ export default function ExperienceCMSPage() {
                     </tr>
                   ))}
 
-                  {filteredWork.length === 0 && (
+                  {isLoading && (
+                    <tr>
+                      <td colSpan={5} className="p-10 text-center text-zinc-500 font-mono">
+                        Loading...
+                      </td>
+                    </tr>
+                  )}
+                  {!isLoading && filteredWork.length === 0 && (
                     <tr>
                       <td colSpan={5} className="p-10 text-center text-zinc-500 font-mono">
                         No work experience entries matching query.
@@ -544,7 +704,14 @@ export default function ExperienceCMSPage() {
                     </tr>
                   ))}
 
-                  {filteredEdu.length === 0 && (
+                  {isLoading && (
+                    <tr>
+                      <td colSpan={5} className="p-10 text-center text-zinc-500 font-mono">
+                        Loading...
+                      </td>
+                    </tr>
+                  )}
+                  {!isLoading && filteredEdu.length === 0 && (
                     <tr>
                       <td colSpan={5} className="p-10 text-center text-zinc-500 font-mono">
                         No education records found.
@@ -615,7 +782,14 @@ export default function ExperienceCMSPage() {
                     </tr>
                   ))}
 
-                  {filteredCert.length === 0 && (
+                  {isLoading && (
+                    <tr>
+                      <td colSpan={5} className="p-10 text-center text-zinc-500 font-mono">
+                        Loading...
+                      </td>
+                    </tr>
+                  )}
+                  {!isLoading && filteredCert.length === 0 && (
                     <tr>
                       <td colSpan={5} className="p-10 text-center text-zinc-500 font-mono">
                         No certifications cataloged.
