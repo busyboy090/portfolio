@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, JetBrains_Mono } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const geist = Geist({
@@ -28,7 +29,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${geist.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+      className={`${geist.variable} ${jetbrainsMono.variable}`}
     >
       <head>
         <link
@@ -36,8 +38,11 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
         />
       </head>
-      <body className="bg-background text-on-background min-h-screen font-body-md text-body-md overflow-x-hidden">
-        {children}
+      <body
+        suppressHydrationWarning
+        className="bg-background text-on-background min-h-screen font-body-md text-body-md overflow-x-hidden"
+      >
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
