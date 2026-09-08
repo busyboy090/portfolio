@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -18,6 +18,7 @@ import {
   Layers,
   Code2,
 } from "lucide-react";
+import { createClient } from "@/lib/client";
 
 // ==========================================
 // TYPES & CONSTANTS
@@ -68,45 +69,24 @@ const SECTION_CONFIG: Record<
   },
 };
 
-const INITIAL_SKILLS: SkillCategoryItem[] = [
-  {
-    id: "skill-1",
-    name: "Modern UI & State Management",
-    section: "frontend",
-    description: "Responsive web apps, client-side caching, and UI performance engineering.",
-    proficiency: "Advanced",
-    skills: ["React", "Next.js", "TypeScript", "Tailwind CSS", "Zustand", "Framer Motion"],
-  },
-  {
-    id: "skill-2",
-    name: "API & Server Architecture",
-    section: "backend",
-    description: "High-throughput microservices, REST/GraphQL gateways, and secure authentication.",
-    proficiency: "Advanced",
-    skills: ["Node.js", "Express", "NestJS", "Go", "GraphQL", "JWT / OAuth2"],
-  },
-  {
-    id: "skill-3",
-    name: "Relational & In-Memory Stores",
-    section: "database",
-    description: "Schema modeling, query tuning, indexing strategies, and caching layers.",
-    proficiency: "Proficient",
-    skills: ["PostgreSQL", "Prisma ORM", "Redis", "MongoDB", "Supabase"],
-  },
-  {
-    id: "skill-4",
-    name: "DevOps, CI/CD & Cloud",
-    section: "tools",
-    description: "Automated test pipelines, container orchestration, and serverless hosting.",
-    proficiency: "Proficient",
-    skills: ["Docker", "Git / GitHub Actions", "AWS (S3, ECS)", "Vercel", "Linux"],
-  },
-];
+function fromRow(row: any): SkillCategoryItem {
+  return {
+    id: row.id,
+    name: row.name,
+    section: row.section,
+    description: row.description,
+    proficiency: row.proficiency ?? undefined,
+    skills: row.skills ?? [],
+  };
+}
 
 type TabFilter = "all" | SkillSection;
 
 export default function SkillsCMSPage() {
-  const [skillsList, setSkillsList] = useState<SkillCategoryItem[]>(INITIAL_SKILLS);
+  const supabase = useMemo(() => createClient(), []);
+
+  const [skillsList, setSkillsList] = useState<SkillCategoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -129,6 +109,32 @@ export default function SkillsCMSPage() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("skill_categories")
+        .select("*")
+        .order("sort_order", { ascending: true });
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error(error);
+        showToast("Failed to load skills");
+      } else {
+        setSkillsList((data ?? []).map(fromRow));
+      }
+      setIsLoading(false);
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
 
   // ==========================================
   // HANDLERS
@@ -156,34 +162,70 @@ export default function SkillsCMSPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this skill group?")) return;
+
+    const { error } = await supabase.from("skill_categories").delete().eq("id", id);
+
+    if (error) {
+      console.error(error);
+      showToast("Failed to delete skill group");
+      return;
+    }
+
     setSkillsList((prev) => prev.filter((item) => item.id !== id));
     showToast("Skill group removed");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.description || !formData.section) return;
 
     if (modalMode === "edit" && editingId) {
-      setSkillsList((prev) =>
-        prev.map((item) =>
-          item.id === editingId ? ({ ...item, ...formData } as SkillCategoryItem) : item
-        )
-      );
-      showToast(`Updated "${formData.name}"`);
+      const { data, error } = await supabase
+        .from("skill_categories")
+        .update({
+          name: formData.name,
+          section: formData.section,
+          description: formData.description,
+          proficiency: formData.proficiency || null,
+          skills: formData.skills || [],
+        })
+        .eq("id", editingId)
+        .select()
+        .single();
+
+      if (error || !data) {
+        console.error(error);
+        showToast("Failed to update skill group");
+        return;
+      }
+
+      const updated = fromRow(data);
+      setSkillsList((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+      showToast(`Updated "${updated.name}"`);
     } else {
-      const newItem: SkillCategoryItem = {
-        id: `skill-${Date.now()}`,
-        name: formData.name,
-        section: formData.section,
-        description: formData.description,
-        proficiency: formData.proficiency || "Proficient",
-        skills: formData.skills || [],
-      };
-      setSkillsList((prev) => [...prev, newItem]);
-      showToast(`Added "${newItem.name}"`);
+      const { data, error } = await supabase
+        .from("skill_categories")
+        .insert({
+          name: formData.name,
+          section: formData.section,
+          description: formData.description,
+          proficiency: formData.proficiency || "Proficient",
+          skills: formData.skills || [],
+        })
+        .select()
+        .single();
+
+      if (error || !data) {
+        console.error(error);
+        showToast("Failed to create skill group");
+        return;
+      }
+
+      const created = fromRow(data);
+      setSkillsList((prev) => [...prev, created]);
+      showToast(`Added "${created.name}"`);
     }
 
     setIsModalOpen(false);
@@ -339,7 +381,12 @@ export default function SkillsCMSPage() {
         {/* SKILLS SECTION GRIDS */}
         {/* ============================================================== */}
         <div className="space-y-10">
-          {groupedSections.map((sectionKey) => {
+          {isLoading && (
+            <div className="p-12 text-center text-zinc-500 font-mono border border-dashed border-zinc-800 rounded-xl">
+              Loading skills...
+            </div>
+          )}
+          {!isLoading && groupedSections.map((sectionKey) => {
             const sectionItems = filteredSkills.filter((item) => item.section === sectionKey);
             const config = SECTION_CONFIG[sectionKey];
             const SectionIcon = config.icon;
@@ -422,7 +469,7 @@ export default function SkillsCMSPage() {
             );
           })}
 
-          {filteredSkills.length === 0 && (
+          {!isLoading && filteredSkills.length === 0 && (
             <div className="p-12 text-center text-zinc-500 font-mono border border-dashed border-zinc-800 rounded-xl">
               No skills match your search query.
             </div>
