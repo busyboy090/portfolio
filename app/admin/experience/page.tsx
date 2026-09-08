@@ -149,7 +149,7 @@ export default function ExperienceCMSPage() {
 
     (async () => {
       const [workRes, eduRes, certRes] = await Promise.all([
-        supabase.from("work_experience").select("*").order("created_at", { ascending: false }),
+        supabase.from("experience").select("*").order("created_at", { ascending: false }),
         supabase.from("education").select("*").order("created_at", { ascending: false }),
         supabase.from("certifications").select("*").order("created_at", { ascending: false }),
       ]);
@@ -230,7 +230,7 @@ export default function ExperienceCMSPage() {
     if (!confirm("Are you sure you want to remove this entry?")) return;
 
     if (activeSection === "work") {
-      const { error } = await supabase.from("work_experience").delete().eq("id", id);
+      const { error } = await supabase.from("experience").delete().eq("id", id);
       if (error) {
         console.error(error);
         showToast("Failed to remove entry");
@@ -267,7 +267,7 @@ export default function ExperienceCMSPage() {
 
       if (modalMode === "edit" && editingId) {
         const { data, error } = await supabase
-          .from("work_experience")
+          .from("experience")
           .update({
             role: workForm.role,
             company: workForm.company,
@@ -289,7 +289,7 @@ export default function ExperienceCMSPage() {
         showToast(`Updated "${updated.role}"`);
       } else {
         const { data, error } = await supabase
-          .from("work_experience")
+          .from("experience")
           .insert({
             role: workForm.role!,
             company: workForm.company!,
