@@ -3,7 +3,7 @@ import WorkGrid, { ProjectItem } from "./ProjectGrid";
 
 // Server Component: fetches published projects straight from Supabase
 // on every request, instead of reading the static PROJECTS array.
-export default async function WorkPage() {
+export default async function ProjectsPage() {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -13,7 +13,7 @@ export default async function WorkPage() {
     .order("sort_order", { ascending: true });
 
   if (error) {
-    console.error(error);
+    console.error("Failed to load projects:", error);
   }
 
   const projects: ProjectItem[] = (data ?? []).map((row) => ({
@@ -28,16 +28,20 @@ export default async function WorkPage() {
   }));
 
   return (
-    <section className="py-20 px-6 sm:px-12">
+    <section className="py-20 px-6 sm:px-12 bg-background transition-colors">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 pb-6 border-b border-zinc-800/60 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 pb-6 border-b border-zinc-200/60 dark:border-zinc-800/60 gap-6">
           <div>
-            <div className="text-xs uppercase font-semibold tracking-widest text-zinc-400 mb-2">Portfolio</div>
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white">Projects</h1>
+            <div className="text-xs uppercase font-semibold tracking-widest text-zinc-600 dark:text-zinc-400 mb-2">
+              Portfolio
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              Projects
+            </h1>
           </div>
-          {/* <p className="text-zinc-400 text-sm max-w-md font-light">
+          <p className="text-zinc-600 dark:text-zinc-400 text-sm max-w-md font-light">
             Full-stack applications built from Figma prototypes to reliable backends, real-time pipelines, and clean user interfaces.
-          </p> */}
+          </p>
         </div>
 
         <WorkGrid projects={projects} />

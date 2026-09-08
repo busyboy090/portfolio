@@ -30,30 +30,30 @@ export default function Footer() {
       whileInView="visible"
       viewport={{ once: true, margin: "-40px" }}
       variants={fadeInUp}
-      className="w-full py-12 px-6 sm:px-12 border-t border-zinc-800/80 text-xs text-zinc-500 bg-[#030305]"
+      className="w-full py-12 px-6 sm:px-12 border-t border-zinc-200/80 dark:border-zinc-800/80 text-xs text-zinc-500 bg-background"
     >
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="flex items-center gap-2">
-          <span className="text-zinc-300 font-bold uppercase text-sm">Busayo Ale</span>
+          <span className="text-zinc-700 dark:text-zinc-300 font-bold uppercase text-sm">Busayo Ale</span>
           <span>— Full Stack Developer</span>
         </div>
 
-        <div className="flex gap-6 text-zinc-400 items-center font-medium">
-          <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1.5">
+        <div className="flex gap-6 text-zinc-600 dark:text-zinc-400 items-center font-medium">
+          <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-zinc-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
             <Github className="w-3.5 h-3.5" />
             <span>GitHub</span>
           </a>
-          <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1.5">
+          <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="hover:text-zinc-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
             <Linkedin className="w-3.5 h-3.5" />
             <span>LinkedIn</span>
           </a>
-          <a href="#" className="hover:text-white transition-colors flex items-center gap-1.5">
+          <a href="#" className="hover:text-zinc-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
             <FileText className="w-3.5 h-3.5" />
             <span>Resume</span>
           </a>
         </div>
 
-        <div className="text-zinc-600">
+        <div className="text-zinc-400 dark:text-zinc-600">
           © {new Date().getFullYear()} Busayo Ale. All rights reserved.
         </div>
       </div>

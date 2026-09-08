@@ -113,7 +113,8 @@ function DevWorkspaceSnapshot() {
         className="absolute -inset-4 bg-gradient-to-r from-purple-600/30 via-cyan-500/20 to-blue-600/30 rounded-3xl blur-3xl -z-10 pointer-events-none"
       />
 
-      <div className="w-full rounded-xl border border-zinc-800/90 bg-[#07070a]/90 backdrop-blur-xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden">
+      {/* Main Terminal Window: Keeps dev console aesthetic with subtle adaptive border */}
+      <div className="w-full rounded-xl border border-zinc-200/90 dark:border-zinc-800/90 bg-[#07070a]/95 backdrop-blur-xl shadow-[0_25px_70px_rgba(0,0,0,0.15)] dark:shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 bg-[#0d0d12]/90 border-b border-zinc-800">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#ef4444]" />
@@ -144,6 +145,7 @@ function DevWorkspaceSnapshot() {
         </div>
       </div>
 
+      {/* Floating Code Snapshot */}
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: [0, -8, 0] }}
@@ -151,7 +153,7 @@ function DevWorkspaceSnapshot() {
           opacity: { duration: 0.6, delay: 0.3 },
           y: { duration: 6, repeat: Infinity, ease: "easeInOut" },
         }}
-        className="absolute -right-2 sm:-right-4 -bottom-6 sm:-bottom-8 w-[92%] sm:w-[380px] rounded-xl border border-zinc-700/80 bg-[#0d0d14]/95 backdrop-blur-xl shadow-[0_30px_70px_rgba(0,0,0,0.98)] overflow-hidden z-20"
+        className="absolute -right-2 sm:-right-4 -bottom-6 sm:-bottom-8 w-[92%] sm:w-[380px] rounded-xl border border-zinc-300/80 dark:border-zinc-700/80 bg-[#0d0d14]/95 backdrop-blur-xl shadow-[0_30px_70px_rgba(0,0,0,0.2)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.98)] overflow-hidden z-20"
       >
         <div className="flex items-center justify-between px-3 py-2 bg-[#12121c] border-b border-zinc-800">
           <div className="flex items-center gap-1.5">
@@ -243,6 +245,11 @@ export default function HomePage() {
       time += 0.018;
       ctx.clearRect(0, 0, width, height);
 
+      const isDark = document.documentElement.classList.contains("dark");
+      const baseR = isDark ? 161 : 100;
+      const baseG = isDark ? 161 : 100;
+      const baseB = isDark ? 170 : 115;
+
       const cellX = width / cols;
       const cellY = height / rows;
 
@@ -258,8 +265,8 @@ export default function HomePage() {
 
           let angle = Math.sin(x * 0.005 + time * 1.2) + Math.cos(y * 0.005 + time);
           let length = 10 + Math.sin(x * 0.01 + y * 0.01 + time) * 3;
-          let alpha = 0.18 + Math.sin(x * 0.005 + time) * 0.07;
-          let strokeColor = `rgba(161, 161, 170, ${alpha})`;
+          let alpha = (isDark ? 0.18 : 0.12) + Math.sin(x * 0.005 + time) * 0.05;
+          let strokeColor = `rgba(${baseR}, ${baseG}, ${baseB}, ${alpha})`;
 
           if (isHovering && dist < influenceRadius) {
             const factor = Math.pow(1 - dist / influenceRadius, 2);
@@ -267,9 +274,9 @@ export default function HomePage() {
             angle = angle * (1 - factor) + (repelAngle + Math.PI) * factor;
             length += factor * 14;
 
-            const r = Math.round(168 * factor + 161 * (1 - factor));
-            const g = Math.round(85 * factor + 161 * (1 - factor));
-            const b = Math.round(247 * factor + 170 * (1 - factor));
+            const r = Math.round(147 * factor + baseR * (1 - factor));
+            const g = Math.round(51 * factor + baseG * (1 - factor));
+            const b = Math.round(234 * factor + baseB * (1 - factor));
             const boostedAlpha = Math.min(0.9, alpha + factor * 0.7);
             strokeColor = `rgba(${r}, ${g}, ${b}, ${boostedAlpha})`;
           }
@@ -307,10 +314,10 @@ export default function HomePage() {
   return (
     <div
       ref={containerRef}
-      className="relative min-h-[calc(100vh-80px)] flex items-center overflow-hidden bg-[#030305] text-zinc-100"
+      className="relative min-h-[calc(100vh-80px)] flex items-center overflow-hidden bg-background text-zinc-900 dark:text-zinc-100 transition-colors"
     >
       <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,transparent_20%,#030305_100%)] pointer-events-none z-[1]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,transparent_20%,var(--background)_100%)] pointer-events-none z-[1]" />
 
       <motion.div
         style={{ rotateX: tiltRotateX, rotateY: tiltRotateY, transformPerspective: 1200 }}
@@ -323,7 +330,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-base sm:text-lg font-mono text-zinc-400 font-medium mb-2 tracking-tight"
+              className="text-base sm:text-lg font-mono text-zinc-600 dark:text-zinc-400 font-medium mb-2 tracking-tight"
             >
               Hi, my name is
             </motion.p>
@@ -334,7 +341,7 @@ export default function HomePage() {
               <motion.div
                 animate={{
                   scale: [0.95, 1.12, 0.95],
-                  opacity: [0.25, 0.55, 0.25],
+                  opacity: [0.2, 0.45, 0.2],
                 }}
                 transition={{
                   duration: 5,
@@ -358,7 +365,7 @@ export default function HomePage() {
                               y: [0, -7, 0],
                               filter: [
                                 "hue-rotate(0deg) drop-shadow(0 0 0px rgba(168,85,247,0))",
-                                "hue-rotate(35deg) drop-shadow(0 0 10px rgba(168,85,247,0.4))",
+                                "hue-rotate(35deg) drop-shadow(0 0 10px rgba(168,85,247,0.3))",
                                 "hue-rotate(0deg) drop-shadow(0 0 0px rgba(168,85,247,0))",
                               ],
                             }}
@@ -368,7 +375,7 @@ export default function HomePage() {
                               ease: "easeInOut",
                               delay: totalIndex * 0.14,
                             }}
-                            className="inline-block text-5xl sm:text-6xl md:text-8xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white via-zinc-100 to-purple-300"
+                            className="inline-block text-5xl sm:text-6xl md:text-8xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-zinc-900 via-zinc-700 to-purple-600 dark:from-white dark:via-zinc-100 dark:to-purple-300"
                           >
                             {char}
                           </motion.span>
@@ -384,7 +391,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.3 }}
-              className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-zinc-400 mb-6 leading-tight"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-zinc-600 dark:text-zinc-400 mb-6 leading-tight"
             >
               Full Stack Developer
             </motion.h2>
@@ -393,7 +400,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.4 }}
-              className="text-base sm:text-lg text-zinc-400 max-w-xl mb-8 font-light leading-relaxed"
+              className="text-base sm:text-lg text-zinc-600 dark:text-zinc-400 max-w-xl mb-8 font-light leading-relaxed"
             >
               Architecting modern web applications with clean, maintainable code. Specializing in responsive frontend experiences, high-throughput APIs, and reliable database systems.
             </motion.p>
@@ -406,8 +413,8 @@ export default function HomePage() {
               className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto mb-8"
             >
               <Link
-                href="/work"
-                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-zinc-100 hover:bg-white text-zinc-950 font-medium text-sm transition-all duration-200 flex items-center justify-center gap-3 shadow-lg shadow-white/10 group"
+                href="/projects"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-950 dark:hover:bg-white text-zinc-50 dark:text-zinc-950 font-medium text-sm transition-all duration-200 flex items-center justify-center gap-3 shadow-lg shadow-zinc-900/10 dark:shadow-white/10 group"
               >
                 <span>View Projects</span>
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -417,7 +424,7 @@ export default function HomePage() {
               <a
                 href="/resume.pdf"
                 download="Busayo_Ale_CV.pdf"
-                className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 hover:bg-zinc-800/60 text-zinc-300 hover:text-white font-medium text-sm transition-all duration-200 backdrop-blur-md flex items-center justify-center gap-2 group"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-zinc-100/60 dark:bg-zinc-900/40 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white font-medium text-sm transition-all duration-200 backdrop-blur-md flex items-center justify-center gap-2 group"
               >
                 <Download className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
                 <span>Download CV</span>
@@ -443,7 +450,7 @@ export default function HomePage() {
                     target="_blank"
                     rel="noreferrer"
                     aria-label={item.name}
-                    className="p-2.5 rounded-lg border border-zinc-800/80 bg-zinc-900/40 hover:bg-zinc-800/70 hover:border-zinc-700 text-zinc-400 hover:text-white transition-all duration-200"
+                    className="p-2.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-100/60 dark:bg-zinc-900/40 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all duration-200"
                   >
                     <Icon className="w-4 h-4" />
                   </a>

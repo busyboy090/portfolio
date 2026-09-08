@@ -8,7 +8,6 @@ import { createClient } from "@/lib/client";
 
 export default function ContactPage() {
   const [copied, setCopied] = useState(false);
-
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [status, setStatus] = useState<"idle" | "submitting" | "sent" | "error">("idle");
 
@@ -43,23 +42,23 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-20 px-6 sm:px-12">
+    <div className="min-h-[80vh] flex items-center justify-center py-20 px-6 sm:px-12 bg-background transition-colors">
       <div className="max-w-4xl w-full mx-auto text-center">
         <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeInUp}
-          className="p-10 sm:p-16 rounded-2xl border border-zinc-800 bg-zinc-950/50 backdrop-blur-md"
+          className="p-10 sm:p-16 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50 backdrop-blur-md"
         >
-          <div className="inline-block px-4 py-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 text-xs font-medium text-zinc-300 uppercase tracking-wider mb-6">
+          <div className="inline-block px-4 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-100/60 dark:bg-zinc-900/60 text-xs font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-6">
             Open to Opportunities
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white mb-6">
+          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-zinc-900 dark:text-white mb-6">
             Let&apos;s build something great.
           </h1>
 
-          <p className="text-zinc-400 text-base sm:text-lg max-w-xl mx-auto mb-10 font-light leading-relaxed">
+          <p className="text-zinc-600 dark:text-zinc-400 text-base sm:text-lg max-w-xl mx-auto mb-10 font-light leading-relaxed">
             Available for full-time full-stack engineering roles, freelance contracts, and technical consulting.
           </p>
 
@@ -68,30 +67,35 @@ export default function ContactPage() {
               href="mailto:busayo.ale@example.com"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-zinc-100 hover:bg-white text-zinc-950 font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-950 dark:hover:bg-white text-zinc-50 dark:text-zinc-950 font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2"
             >
               <Mail className="w-4 h-4" />
               <span>Start Direct Discussion</span>
             </motion.a>
 
             <motion.button
+              type="button"
               onClick={handleCopyEmail}
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-zinc-800 hover:border-zinc-700 bg-zinc-900/60 text-xs font-medium text-zinc-300 transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-zinc-100/60 dark:bg-zinc-900/60 text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-all duration-200 flex items-center justify-center gap-2"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-zinc-200" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />
+              ) : (
+                <Copy className="w-3.5 h-3.5 text-zinc-700 dark:text-zinc-300" />
+              )}
               <span>{copied ? "Copied to Clipboard" : "Copy Email Address"}</span>
             </motion.button>
           </div>
 
-          <div className="text-left border-t border-zinc-800/80 pt-10">
-            <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider mb-6 text-center">
+          <div className="text-left border-t border-zinc-200/80 dark:border-zinc-800/80 pt-10">
+            <h2 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-6 text-center">
               Or send a message directly
             </h2>
 
             {status === "sent" ? (
-              <div className="text-center py-8 text-zinc-300 text-sm font-light">
+              <div className="text-center py-8 text-zinc-700 dark:text-zinc-300 text-sm font-light">
                 Thanks — your message has been sent. I&apos;ll get back to you soon.
               </div>
             ) : (
@@ -103,7 +107,7 @@ export default function ContactPage() {
                     placeholder="Your name"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-purple-500"
+                    className="w-full p-3 rounded-xl bg-zinc-100/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
                   />
                   <input
                     type="email"
@@ -111,7 +115,7 @@ export default function ContactPage() {
                     placeholder="Your email"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-purple-500"
+                    className="w-full p-3 rounded-xl bg-zinc-100/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
                   />
                 </div>
                 <input
@@ -119,7 +123,7 @@ export default function ContactPage() {
                   placeholder="Subject (optional)"
                   value={form.subject}
                   onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-purple-500"
+                  className="w-full p-3 rounded-xl bg-zinc-100/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
                 />
                 <textarea
                   required
@@ -127,11 +131,13 @@ export default function ContactPage() {
                   placeholder="Your message"
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-purple-500"
+                  className="w-full p-3 rounded-xl bg-zinc-100/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
                 />
 
                 {status === "error" && (
-                  <p className="text-rose-400 text-xs">Something went wrong — please try again.</p>
+                  <p className="text-rose-500 dark:text-rose-400 text-xs text-center">
+                    Something went wrong — please try again.
+                  </p>
                 )}
 
                 <button
