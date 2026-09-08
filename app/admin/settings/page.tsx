@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Settings,
@@ -18,43 +18,46 @@ import {
   Trash2,
   Download,
 } from "lucide-react";
+import { createClient } from "@/lib/client";
 
 export default function SettingsDashboardPage() {
+  const supabase = useMemo(() => createClient(), []);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Profile Information
   const [profile, setProfile] = useState({
-    name: "Busayo Ale",
-    title: "Full Stack Developer",
-    tagline:
-      "Architecting modern web applications with clean, maintainable code. Specializing in responsive frontend experiences, high-throughput APIs, and reliable database systems.",
+    name: "",
+    title: "",
+    tagline: "",
     availabilityStatus: "available", // 'available' | 'contracts' | 'busy'
-    yearsExperience: "4+",
+    yearsExperience: "",
   });
 
   // Social & Channels
   const [socials, setSocials] = useState({
-    email: "busayo.ale@example.com",
-    github: "https://github.com",
-    linkedin: "https://linkedin.com",
-    twitter: "https://x.com",
+    email: "",
+    github: "",
+    linkedin: "",
+    twitter: "",
   });
 
   // Resume File State
   const [resumeData, setResumeData] = useState({
-    fileName: "Busayo_Ale_CV.pdf",
-    fileSize: "248 KB",
-    lastUploaded: "Aug 28, 2026",
-    isUploaded: true,
+    fileName: "",
+    fileSize: "",
+    lastUploaded: "",
+    isUploaded: false,
+    url: "",
   });
 
   // SEO & Head Metadata
   const [seo, setSeo] = useState({
-    siteTitle: "Busayo Ale | Full Stack Developer",
-    metaDescription:
-      "Portfolio of Busayo Ale, Full Stack Developer specializing in Next.js, Node.js, and Cloud architectures.",
-    keywords: "Full Stack Developer, Next.js, TypeScript, React, NestJS, Cloud Architecture",
+    siteTitle: "",
+    metaDescription: "",
+    keywords: "",
   });
 
   const showToast = (msg: string) => {
@@ -62,26 +65,139 @@ export default function SettingsDashboardPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.type !== "application/pdf") {
-        alert("Please upload a valid PDF document.");
-        return;
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("*")
+        .eq("id", 1)
+        .maybeSingle();
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error(error);
+        showToast("Failed to load settings");
+      } else if (data) {
+        setProfile({
+          name: data.name ?? "",
+          title: data.title ?? "",
+          tagline: data.tagline ?? "",
+          availabilityStatus: data.availability_status ?? "available",
+          yearsExperience: data.years_experience ?? "",
+        });
+        setSocials({
+          email: data.email ?? "",
+          github: data.github_url ?? "",
+          linkedin: data.linkedin_url ?? "",
+          twitter: data.twitter_url ?? "",
+        });
+        setResumeData({
+          fileName: data.resume_file_name ?? "",
+          fileSize: data.resume_file_size ?? "",
+          lastUploaded: data.resume_uploaded_at
+            ? new Date(data.resume_uploaded_at).toLocaleDateString(undefined, { dateStyle: "medium" })
+            : "",
+          isUploaded: Boolean(data.resume_url),
+          url: data.resume_url ?? "",
+        });
+        setSeo({
+          siteTitle: data.seo_site_title ?? "",
+          metaDescription: data.seo_meta_description ?? "",
+          keywords: data.seo_keywords ?? "",
+        });
       }
-      const sizeFormatted = (file.size / 1024).toFixed(0) + " KB";
-      setResumeData({
-        fileName: file.name,
-        fileSize: sizeFormatted,
-        lastUploaded: "Just now",
-        isUploaded: true,
-      });
-      showToast("Resume document uploaded successfully");
+      setIsLoading(false);
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      alert("Please upload a valid PDF document.");
+      return;
     }
+
+    // Always overwrite the same object — there's only ever one resume.
+    const { error: uploadError } = await supabase.storage
+      .from("resumes")
+      .upload("resume.pdf", file, { upsert: true });
+
+    if (uploadError) {
+      console.error(uploadError);
+      showToast("Resume upload failed");
+      return;
+    }
+
+    const { data: publicUrlData } = supabase.storage.from("resumes").getPublicUrl("resume.pdf");
+    const sizeFormatted = (file.size / 1024).toFixed(0) + " KB";
+    const uploadedAt = new Date().toISOString();
+
+    const { error: updateError } = await supabase
+      .from("site_settings")
+      .update({
+        resume_url: publicUrlData.publicUrl,
+        resume_file_name: file.name,
+        resume_file_size: sizeFormatted,
+        resume_uploaded_at: uploadedAt,
+      })
+      .eq("id", 1);
+
+    if (updateError) {
+      console.error(updateError);
+      showToast("Failed to save resume details");
+      return;
+    }
+
+    setResumeData({
+      fileName: file.name,
+      fileSize: sizeFormatted,
+      lastUploaded: "Just now",
+      isUploaded: true,
+      url: publicUrlData.publicUrl,
+    });
+    showToast("Resume document uploaded successfully");
   };
 
-  const handleSaveAll = (e: React.FormEvent) => {
+  const handleSaveAll = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
+
+    const { error } = await supabase
+      .from("site_settings")
+      .update({
+        name: profile.name,
+        title: profile.title,
+        tagline: profile.tagline,
+        availability_status: profile.availabilityStatus,
+        years_experience: profile.yearsExperience,
+        email: socials.email,
+        github_url: socials.github,
+        linkedin_url: socials.linkedin,
+        twitter_url: socials.twitter,
+        seo_site_title: seo.siteTitle,
+        seo_meta_description: seo.metaDescription,
+        seo_keywords: seo.keywords,
+      })
+      .eq("id", 1);
+
+    setIsSaving(false);
+
+    if (error) {
+      console.error(error);
+      showToast("Failed to save settings");
+      return;
+    }
+
     showToast("Global site settings updated");
   };
 
@@ -126,14 +242,20 @@ export default function SettingsDashboardPage() {
             </a>
             <button
               onClick={handleSaveAll}
-              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold transition-all flex items-center gap-2 shadow-lg shadow-purple-600/20 active:scale-95"
+              disabled={isSaving}
+              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-60 text-white text-xs font-semibold transition-all flex items-center gap-2 shadow-lg shadow-purple-600/20 active:scale-95"
             >
               <Save className="w-4 h-4" />
-              <span>Save Changes</span>
+              <span>{isSaving ? "Saving..." : "Save Changes"}</span>
             </button>
           </div>
         </div>
 
+        {isLoading ? (
+          <div className="p-12 text-center text-zinc-500 font-mono text-xs border border-dashed border-zinc-800 rounded-xl">
+            Loading settings...
+          </div>
+        ) : (
         <form onSubmit={handleSaveAll} className="space-y-8">
           {/* SECTION 1: PERSONAL & HERO IDENTITY */}
           <div className="p-6 sm:p-8 rounded-xl border border-zinc-800 bg-zinc-950/60 space-y-6">
@@ -243,9 +365,13 @@ export default function SettingsDashboardPage() {
                   <FileText className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-white">{resumeData.fileName}</div>
+                  <div className="text-sm font-semibold text-white">
+                    {resumeData.isUploaded ? resumeData.fileName : "No resume uploaded yet"}
+                  </div>
                   <div className="text-xs font-mono text-zinc-500 mt-0.5">
-                    {resumeData.fileSize} • Uploaded {resumeData.lastUploaded}
+                    {resumeData.isUploaded
+                      ? `${resumeData.fileSize} • Uploaded ${resumeData.lastUploaded}`
+                      : "Upload a PDF to make it available on the live site"}
                   </div>
                 </div>
               </div>
@@ -260,14 +386,18 @@ export default function SettingsDashboardPage() {
                   <span>Replace PDF</span>
                 </button>
 
-                <a
-                  href="/resume.pdf"
-                  download={resumeData.fileName}
-                  className="p-2 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors"
-                  title="Test Download"
-                >
-                  <Download className="w-4 h-4" />
-                </a>
+                {resumeData.url && (
+                  <a
+                    href={resumeData.url}
+                    download={resumeData.fileName}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors"
+                    title="Download Current Resume"
+                  >
+                    <Download className="w-4 h-4" />
+                  </a>
+                )}
               </div>
             </div>
           </div>
@@ -378,13 +508,15 @@ export default function SettingsDashboardPage() {
           <div className="flex items-center justify-end gap-3 pt-4">
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-all flex items-center gap-2 shadow-lg shadow-purple-600/20 active:scale-95"
+              disabled={isSaving}
+              className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-60 text-white font-semibold text-xs transition-all flex items-center gap-2 shadow-lg shadow-purple-600/20 active:scale-95"
             >
               <Save className="w-4 h-4" />
-              <span>Save Global Settings</span>
+              <span>{isSaving ? "Saving..." : "Save Global Settings"}</span>
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );
