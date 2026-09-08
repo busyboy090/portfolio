@@ -66,7 +66,7 @@ export default function AdminSidebarProvider({
       <div>
         {/* Brand / Logo */}
         <div className="flex items-center gap-3 px-2 mb-8">
-          <Image src={Logo} alt="Logo" className="w-8 h-8 rounded-lg" />
+          <Image src={Logo} alt="Logo" className="w-8 h-8 rounded-lg bg-white" />
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-white tracking-tight truncate">Admin Console</h2>
             <p className="text-[11px] text-zinc-500 truncate">Portfolio Studio</p>
