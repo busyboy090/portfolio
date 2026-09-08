@@ -1,14 +1,56 @@
 import { getCurrentUser } from "@/hooks/get-current-user";
-import { FolderKanban, Briefcase, Sparkles, Layers } from "lucide-react";
+import { createClient } from "@/lib/server";
+import { FolderKanban, Briefcase, Sparkles, Mail } from "lucide-react";
 
 export default async function AdminDashboardPage() {
   const user = await getCurrentUser();
+  const supabase = await createClient();
+
+  const [projectsRes, workRes, skillsRes, messagesRes] = await Promise.all([
+    supabase.from("projects").select("id", { count: "exact", head: true }).eq("published", true),
+    supabase.from("work_experience").select("id", { count: "exact", head: true }),
+    supabase.from("skill_categories").select("skills"),
+    supabase.from("messages").select("id", { count: "exact", head: true }).eq("read", false).eq("archived", false),
+  ]);
+
+  const activeProjects = projectsRes.count ?? 0;
+  const workRoles = workRes.count ?? 0;
+
+  // "Tech Stack Modules" = distinct individual tools across every skill
+  // group, not the number of groups — matches what the label implies.
+  const distinctSkills = new Set<string>();
+  (skillsRes.data ?? []).forEach((row: { skills: string[] | null }) => {
+    (row.skills ?? []).forEach((s) => distinctSkills.add(s));
+  });
+  const techStackCount = distinctSkills.size;
+
+  const unreadMessages = messagesRes.count ?? 0;
 
   const STATS = [
-    { label: "Active Projects", value: "3", icon: FolderKanban, detail: "Across WebSockets & Next.js" },
-    { label: "Work Timeline", value: "2 Roles", icon: Briefcase, detail: "4+ years engineering history" },
-    { label: "Tech Stack Modules", value: "18", icon: Sparkles, detail: "Frontend, Backend, DevOps" },
-    { label: "Total Visits", value: "1.2k", icon: Layers, detail: "Last 30 days" },
+    {
+      label: "Active Projects",
+      value: String(activeProjects),
+      icon: FolderKanban,
+      detail: "Currently published on /work",
+    },
+    {
+      label: "Work Timeline",
+      value: `${workRoles} ${workRoles === 1 ? "Role" : "Roles"}`,
+      icon: Briefcase,
+      detail: "Entries in work history",
+    },
+    {
+      label: "Tech Stack Modules",
+      value: String(techStackCount),
+      icon: Sparkles,
+      detail: "Distinct tools across all skill groups",
+    },
+    {
+      label: "Unread Messages",
+      value: String(unreadMessages),
+      icon: Mail,
+      detail: "Awaiting a reply in the inbox",
+    },
   ];
 
   return (
