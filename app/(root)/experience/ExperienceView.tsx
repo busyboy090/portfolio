@@ -134,7 +134,7 @@ export default function ExperienceView({
             )}
           </motion.div>
 
-          {/* Certifications */}
+          {/* Professional Certifications */}
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="space-y-4">
             <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-zinc-700 dark:text-zinc-300 pb-2 border-b border-zinc-200 dark:border-zinc-800">
               <Award className="w-4 h-4 text-purple-600 dark:text-purple-400" />
