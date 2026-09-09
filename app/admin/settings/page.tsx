@@ -17,6 +17,7 @@ import {
   Radio,
   Trash2,
   Download,
+  Phone,
 } from "lucide-react";
 import { createClient } from "@/lib/client";
 
@@ -39,6 +40,7 @@ export default function SettingsDashboardPage() {
   // Social & Channels
   const [socials, setSocials] = useState({
     email: "",
+    phone: "",
     github: "",
     linkedin: "",
     twitter: "",
@@ -90,6 +92,7 @@ export default function SettingsDashboardPage() {
         });
         setSocials({
           email: data.email ?? "",
+          phone: data.phone ?? "",
           github: data.github_url ?? "",
           linkedin: data.linkedin_url ?? "",
           twitter: data.twitter_url ?? "",
@@ -181,6 +184,7 @@ export default function SettingsDashboardPage() {
         availability_status: profile.availabilityStatus,
         years_experience: profile.yearsExperience,
         email: socials.email,
+        phone: socials.phone,
         github_url: socials.github,
         linkedin_url: socials.linkedin,
         twitter_url: socials.twitter,
@@ -256,266 +260,279 @@ export default function SettingsDashboardPage() {
             Loading settings...
           </div>
         ) : (
-        <form onSubmit={handleSaveAll} className="space-y-8">
-          {/* SECTION 1: PERSONAL & HERO IDENTITY */}
-          <div className="p-6 sm:p-8 rounded-xl border border-zinc-800 bg-zinc-950/60 space-y-6">
-            <div className="flex items-center gap-2 pb-4 border-b border-zinc-800/80">
-              <User className="w-4 h-4 text-purple-400" />
-              <h2 className="text-base font-bold text-white">Hero Identity & Presence</h2>
-            </div>
+          <form onSubmit={handleSaveAll} className="space-y-8">
+            {/* SECTION 1: PERSONAL & HERO IDENTITY */}
+            <div className="p-6 sm:p-8 rounded-xl border border-zinc-800 bg-zinc-950/60 space-y-6">
+              <div className="flex items-center gap-2 pb-4 border-b border-zinc-800/80">
+                <User className="w-4 h-4 text-purple-400" />
+                <h2 className="text-base font-bold text-white">Hero Identity & Presence</h2>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
-                  Display Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={profile.name}
-                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                  className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
+                    Display Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profile.name}
+                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                    className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
+                    Professional Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profile.title}
+                    onChange={(e) => setProfile({ ...profile, title: e.target.value })}
+                    className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
-                  Professional Title *
+                  Hero Tagline & Core Bio
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={profile.title}
-                  onChange={(e) => setProfile({ ...profile, title: e.target.value })}
+                <textarea
+                  rows={3}
+                  value={profile.tagline}
+                  onChange={(e) => setProfile({ ...profile, tagline: e.target.value })}
                   className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
                 />
+                <span className="text-zinc-500 text-[10px] mt-1 block font-mono">
+                  Rendered directly on your home hero section beneath the title.
+                </span>
+              </div>
+
+              {/* Availability Radio Pills */}
+              <div>
+                <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-2">
+                  Work Availability Status
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { id: "available", label: "Open to Opportunities", color: "emerald" },
+                    { id: "contracts", label: "Contracts & Advisory Only", color: "amber" },
+                    { id: "busy", label: "Currently Unavailable", color: "zinc" },
+                  ].map((status) => (
+                    <button
+                      type="button"
+                      key={status.id}
+                      onClick={() => setProfile({ ...profile, availabilityStatus: status.id })}
+                      className={`flex items-center gap-2 p-3 rounded-lg border text-xs text-left transition-all ${
+                        profile.availabilityStatus === status.id
+                          ? "bg-purple-950/40 border-purple-600 text-purple-200 font-semibold"
+                          : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          status.color === "emerald"
+                            ? "bg-emerald-400"
+                            : status.color === "amber"
+                            ? "bg-amber-400"
+                            : "bg-zinc-500"
+                        }`}
+                      />
+                      <span>{status.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
-                Hero Tagline & Core Bio
-              </label>
-              <textarea
-                rows={3}
-                value={profile.tagline}
-                onChange={(e) => setProfile({ ...profile, tagline: e.target.value })}
-                className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
+            {/* SECTION 2: RESUME / CV FILE */}
+            <div className="p-6 sm:p-8 rounded-xl border border-zinc-800 bg-zinc-950/60 space-y-6">
+              <div className="flex items-center gap-2 pb-4 border-b border-zinc-800/80">
+                <FileText className="w-4 h-4 text-purple-400" />
+                <h2 className="text-base font-bold text-white">Curriculum Vitae (PDF)</h2>
+              </div>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="application/pdf"
+                onChange={handleResumeUpload}
+                className="hidden"
               />
-              <span className="text-zinc-500 text-[10px] mt-1 block font-mono">
-                Rendered directly on your home hero section beneath the title.
-              </span>
-            </div>
 
-            {/* Availability Radio Pills */}
-            <div>
-              <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-2">
-                Work Availability Status
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[
-                  { id: "available", label: "Open to Opportunities", color: "emerald" },
-                  { id: "contracts", label: "Contracts & Advisory Only", color: "amber" },
-                  { id: "busy", label: "Currently Unavailable", color: "zinc" },
-                ].map((status) => (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-lg bg-purple-950/50 border border-purple-800 text-purple-400">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">
+                      {resumeData.isUploaded ? resumeData.fileName : "No resume uploaded yet"}
+                    </div>
+                    <div className="text-xs font-mono text-zinc-500 mt-0.5">
+                      {resumeData.isUploaded
+                        ? `${resumeData.fileSize} • Uploaded ${resumeData.lastUploaded}`
+                        : "Upload a PDF to make it available on the live site"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <button
                     type="button"
-                    key={status.id}
-                    onClick={() => setProfile({ ...profile, availabilityStatus: status.id })}
-                    className={`flex items-center gap-2 p-3 rounded-lg border text-xs text-left transition-all ${
-                      profile.availabilityStatus === status.id
-                        ? "bg-purple-950/40 border-purple-600 text-purple-200 font-semibold"
-                        : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
-                    }`}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-medium transition-colors flex items-center justify-center gap-2"
                   >
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        status.color === "emerald"
-                          ? "bg-emerald-400"
-                          : status.color === "amber"
-                          ? "bg-amber-400"
-                          : "bg-zinc-500"
-                      }`}
-                    />
-                    <span>{status.label}</span>
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Replace PDF</span>
                   </button>
-                ))}
+
+                  {resumeData.url && (
+                    <a
+                      href={resumeData.url}
+                      download={resumeData.fileName}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors"
+                      title="Download Current Resume"
+                    >
+                      <Download className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* SECTION 2: RESUME / CV FILE */}
-          <div className="p-6 sm:p-8 rounded-xl border border-zinc-800 bg-zinc-950/60 space-y-6">
-            <div className="flex items-center gap-2 pb-4 border-b border-zinc-800/80">
-              <FileText className="w-4 h-4 text-purple-400" />
-              <h2 className="text-base font-bold text-white">Curriculum Vitae (PDF)</h2>
-            </div>
+            {/* SECTION 3: SOCIAL ACCOUNTS & CONTACT */}
+            <div className="p-6 sm:p-8 rounded-xl border border-zinc-800 bg-zinc-950/60 space-y-6">
+              <div className="flex items-center gap-2 pb-4 border-b border-zinc-800/80">
+                <Share2 className="w-4 h-4 text-purple-400" />
+                <h2 className="text-base font-bold text-white">Social & Reach Channels</h2>
+              </div>
 
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="application/pdf"
-              onChange={handleResumeUpload}
-              className="hidden"
-            />
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg bg-purple-950/50 border border-purple-800 text-purple-400">
-                  <FileText className="w-6 h-6" />
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <div className="text-sm font-semibold text-white">
-                    {resumeData.isUploaded ? resumeData.fileName : "No resume uploaded yet"}
-                  </div>
-                  <div className="text-xs font-mono text-zinc-500 mt-0.5">
-                    {resumeData.isUploaded
-                      ? `${resumeData.fileSize} • Uploaded ${resumeData.lastUploaded}`
-                      : "Upload a PDF to make it available on the live site"}
-                  </div>
+                  <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
+                    Public Contact Email
+                  </label>
+                  <input
+                    type="email"
+                    value={socials.email}
+                    onChange={(e) => setSocials({ ...socials, email: e.target.value })}
+                    className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
+                    Phone / WhatsApp Number (with country code)
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+234..."
+                    value={socials.phone}
+                    onChange={(e) => setSocials({ ...socials, phone: e.target.value })}
+                    className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
+                    GitHub Profile URL
+                  </label>
+                  <input
+                    type="url"
+                    value={socials.github}
+                    onChange={(e) => setSocials({ ...socials, github: e.target.value })}
+                    className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
+                    LinkedIn URL
+                  </label>
+                  <input
+                    type="url"
+                    value={socials.linkedin}
+                    onChange={(e) => setSocials({ ...socials, linkedin: e.target.value })}
+                    className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
+                    X (Twitter) Profile URL
+                  </label>
+                  <input
+                    type="url"
+                    value={socials.twitter}
+                    onChange={(e) => setSocials({ ...socials, twitter: e.target.value })}
+                    className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
+                  />
                 </div>
               </div>
+            </div>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-medium transition-colors flex items-center justify-center gap-2"
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Replace PDF</span>
-                </button>
-
-                {resumeData.url && (
-                  <a
-                    href={resumeData.url}
-                    download={resumeData.fileName}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-2 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors"
-                    title="Download Current Resume"
-                  >
-                    <Download className="w-4 h-4" />
-                  </a>
-                )}
+            {/* SECTION 4: SEO & OPEN GRAPH METADATA */}
+            <div className="p-6 sm:p-8 rounded-xl border border-zinc-800 bg-zinc-950/60 space-y-6">
+              <div className="flex items-center gap-2 pb-4 border-b border-zinc-800/80">
+                <Globe className="w-4 h-4 text-purple-400" />
+                <h2 className="text-base font-bold text-white">SEO & Search Indexing</h2>
               </div>
-            </div>
-          </div>
 
-          {/* SECTION 3: SOCIAL ACCOUNTS & CONTACT */}
-          <div className="p-6 sm:p-8 rounded-xl border border-zinc-800 bg-zinc-950/60 space-y-6">
-            <div className="flex items-center gap-2 pb-4 border-b border-zinc-800/80">
-              <Share2 className="w-4 h-4 text-purple-400" />
-              <h2 className="text-base font-bold text-white">Social & Reach Channels</h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
-                  Public Contact Email
+                  Site Browser Title
                 </label>
                 <input
-                  type="email"
-                  value={socials.email}
-                  onChange={(e) => setSocials({ ...socials, email: e.target.value })}
+                  type="text"
+                  value={seo.siteTitle}
+                  onChange={(e) => setSeo({ ...seo, siteTitle: e.target.value })}
                   className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
                 />
               </div>
 
               <div>
                 <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
-                  GitHub Profile URL
+                  Meta Description (Search & Social Preview)
                 </label>
-                <input
-                  type="url"
-                  value={socials.github}
-                  onChange={(e) => setSocials({ ...socials, github: e.target.value })}
+                <textarea
+                  rows={2}
+                  value={seo.metaDescription}
+                  onChange={(e) => setSeo({ ...seo, metaDescription: e.target.value })}
                   className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
                 />
               </div>
 
               <div>
                 <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
-                  LinkedIn URL
+                  Meta Keywords
                 </label>
                 <input
-                  type="url"
-                  value={socials.linkedin}
-                  onChange={(e) => setSocials({ ...socials, linkedin: e.target.value })}
-                  className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
-                  X (Twitter) Profile URL
-                </label>
-                <input
-                  type="url"
-                  value={socials.twitter}
-                  onChange={(e) => setSocials({ ...socials, twitter: e.target.value })}
+                  type="text"
+                  value={seo.keywords}
+                  onChange={(e) => setSeo({ ...seo, keywords: e.target.value })}
                   className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
                 />
               </div>
             </div>
-          </div>
 
-          {/* SECTION 4: SEO & OPEN GRAPH METADATA */}
-          <div className="p-6 sm:p-8 rounded-xl border border-zinc-800 bg-zinc-950/60 space-y-6">
-            <div className="flex items-center gap-2 pb-4 border-b border-zinc-800/80">
-              <Globe className="w-4 h-4 text-purple-400" />
-              <h2 className="text-base font-bold text-white">SEO & Search Indexing</h2>
+            {/* Bottom Save Bar */}
+            <div className="flex items-center justify-end gap-3 pt-4">
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-60 text-white font-semibold text-xs transition-all flex items-center gap-2 shadow-lg shadow-purple-600/20 active:scale-95"
+              >
+                <Save className="w-4 h-4" />
+                <span>{isSaving ? "Saving..." : "Save Global Settings"}</span>
+              </button>
             </div>
-
-            <div>
-              <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
-                Site Browser Title
-              </label>
-              <input
-                type="text"
-                value={seo.siteTitle}
-                onChange={(e) => setSeo({ ...seo, siteTitle: e.target.value })}
-                className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
-                Meta Description (Search & Social Preview)
-              </label>
-              <textarea
-                rows={2}
-                value={seo.metaDescription}
-                onChange={(e) => setSeo({ ...seo, metaDescription: e.target.value })}
-                className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
-                Meta Keywords
-              </label>
-              <input
-                type="text"
-                value={seo.keywords}
-                onChange={(e) => setSeo({ ...seo, keywords: e.target.value })}
-                className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
-              />
-            </div>
-          </div>
-
-          {/* Bottom Save Bar */}
-          <div className="flex items-center justify-end gap-3 pt-4">
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-60 text-white font-semibold text-xs transition-all flex items-center gap-2 shadow-lg shadow-purple-600/20 active:scale-95"
-            >
-              <Save className="w-4 h-4" />
-              <span>{isSaving ? "Saving..." : "Save Global Settings"}</span>
-            </button>
-          </div>
-        </form>
+          </form>
         )}
       </div>
     </div>

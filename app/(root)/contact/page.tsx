@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Mail, Copy, Check, Send, Loader2 } from "lucide-react";
+import { MessageCircle, Copy, Check, Send, Loader2 } from "lucide-react";
 import { fadeInUp } from "@/data/portfolio";
 import { createClient } from "@/lib/client";
 
@@ -11,23 +11,28 @@ export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [status, setStatus] = useState<"idle" | "submitting" | "sent" | "error">("idle");
   const [contactEmail, setContactEmail] = useState<string>("");
+  const [whatsappNumber, setWhatsappNumber] = useState<string>("");
 
   useEffect(() => {
     async function fetchSiteSettings() {
       const supabase = createClient();
+      // Select both email and the phone/whatsapp column
       const { data, error } = await supabase
         .from("site_settings")
-        .select("email")
+        .select("email, phone") // change "phone" if your column is named "whatsapp_number" or similar
         .limit(1)
         .maybeSingle();
 
       if (error) {
-        console.error("Error fetching contact email:", error);
+        console.error("Error fetching site settings:", error);
         return;
       }
 
-      if (data?.email) {
-        setContactEmail(data.email);
+      if (data?.email) setContactEmail(data.email);
+      if (data?.phone) {
+        // Strip out non-numeric characters (plus, spaces, dashes) for wa.me URL
+        const cleanNumber = data.phone.replace(/[^0-9]/g, "");
+        setWhatsappNumber(cleanNumber);
       }
     }
 
@@ -65,6 +70,12 @@ export default function ContactPage() {
     setForm({ name: "", email: "", subject: "", message: "" });
   };
 
+  const whatsappUrl = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+        "Hi Busayo, I saw your portfolio and would like to discuss an opportunity!"
+      )}`
+    : "#";
+
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-20 px-6 sm:px-12 bg-background transition-colors">
       <div className="max-w-4xl w-full mx-auto text-center">
@@ -88,14 +99,16 @@ export default function ContactPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
             <motion.a
-              href={contactEmail ? `mailto:${contactEmail}` : "#"}
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
-              className={`w-full sm:w-auto px-8 py-3.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-950 dark:hover:bg-white text-zinc-50 dark:text-zinc-950 font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
-                !contactEmail ? "pointer-events-none opacity-50" : ""
+              className={`w-full sm:w-auto px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-sm ${
+                !whatsappNumber ? "pointer-events-none opacity-50" : ""
               }`}
             >
-              <Mail className="w-4 h-4" />
+              <MessageCircle className="w-4 h-4" />
               <span>Start Direct Discussion</span>
             </motion.a>
 
