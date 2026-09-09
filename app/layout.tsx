@@ -21,6 +21,16 @@ export const metadata: Metadata = {
   title: "Busayo - Full-Stack Developer",
   description:
     "I engineer high-performance web applications with precision and scale in mind. Specializing in modern JavaScript ecosystems and robust backend architectures.",
+  keywords: [
+    "Full-Stack Developer",
+    "Busayo",
+    "Software Engineer",
+    "React",
+    "Next.js",
+    "TypeScript",
+    "Node.js",
+    "Web Applications",
+  ],
   icons: {
     icon: "/logo-white-bg.png",
   },
