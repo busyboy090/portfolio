@@ -43,6 +43,7 @@ export default function SettingsDashboardPage() {
     phone: "",
     github: "",
     linkedin: "",
+    instagram: "",
     twitter: "",
   });
 
@@ -95,6 +96,7 @@ export default function SettingsDashboardPage() {
           phone: data.phone ?? "",
           github: data.github_url ?? "",
           linkedin: data.linkedin_url ?? "",
+          instagram: data.instagram_url ?? "",
           twitter: data.twitter_url ?? "",
         });
         setResumeData({
@@ -187,6 +189,7 @@ export default function SettingsDashboardPage() {
         phone: socials.phone,
         github_url: socials.github,
         linkedin_url: socials.linkedin,
+        instagram_url: socials.instagram,
         twitter_url: socials.twitter,
         seo_site_title: seo.siteTitle,
         seo_meta_description: seo.metaDescription,
@@ -463,7 +466,20 @@ export default function SettingsDashboardPage() {
                   />
                 </div>
 
-                <div className="sm:col-span-2">
+                <div>
+                  <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
+                    Instagram Profile URL
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://instagram.com/..."
+                    value={socials.instagram}
+                    onChange={(e) => setSocials({ ...socials, instagram: e.target.value })}
+                    className="w-full p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div>
                   <label className="block text-zinc-400 uppercase font-mono text-[10px] mb-1.5">
                     X (Twitter) Profile URL
                   </label>

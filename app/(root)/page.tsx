@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { ArrowRight, Download } from "lucide-react";
+import { createClient } from "@/lib/client";
 
 // ==========================================
 // SOCIAL ICONS
@@ -45,13 +46,6 @@ function XTwitterIcon({ className = "w-4 h-4" }: { className?: string }) {
     </svg>
   );
 }
-
-const SOCIAL_LINKS = [
-  { name: "GitHub", href: "https://github.com", icon: GithubIcon },
-  { name: "LinkedIn", href: "https://linkedin.com", icon: LinkedinIcon },
-  { name: "Instagram", href: "https://instagram.com", icon: InstagramIcon },
-  { name: "X / Twitter", href: "https://x.com", icon: XTwitterIcon },
-];
 
 // ==========================================
 // TERMINAL DATA
@@ -113,7 +107,6 @@ function DevWorkspaceSnapshot() {
         className="absolute -inset-4 bg-gradient-to-r from-purple-600/30 via-cyan-500/20 to-blue-600/30 rounded-3xl blur-3xl -z-10 pointer-events-none"
       />
 
-      {/* Main Terminal Window: Keeps dev console aesthetic with subtle adaptive border */}
       <div className="w-full rounded-xl border border-zinc-200/90 dark:border-zinc-800/90 bg-[#07070a]/95 backdrop-blur-xl shadow-[0_25px_70px_rgba(0,0,0,0.15)] dark:shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 bg-[#0d0d12]/90 border-b border-zinc-800">
           <div className="flex items-center gap-2">
@@ -145,7 +138,6 @@ function DevWorkspaceSnapshot() {
         </div>
       </div>
 
-      {/* Floating Code Snapshot */}
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: [0, -8, 0] }}
@@ -190,6 +182,61 @@ function DevWorkspaceSnapshot() {
 export default function HomePage() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Dynamic state fetched from Supabase
+  const [siteData, setSiteData] = useState({
+    name: "Busayo Ale",
+    title: "Full Stack Developer",
+    tagline:
+      "Architecting modern web applications with clean, maintainable code. Specializing in responsive frontend experiences, high-throughput APIs, and reliable database systems.",
+    resumeUrl: "/resume.pdf",
+    githubUrl: "",
+    linkedinUrl: "",
+    instagramUrl: "",
+    twitterUrl: "",
+  });
+
+  useEffect(() => {
+    async function loadSiteSettings() {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select(
+          "name, title, tagline, resume_url, github_url, linkedin_url, twitter_url, instagram_url"
+        )
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error loading site settings:", error);
+        return;
+      }
+
+      if (data) {
+        setSiteData({
+          name: data.name || "Busayo Ale",
+          title: data.title || "Full Stack Developer",
+          tagline:
+            data.tagline ||
+            "Architecting modern web applications with clean, maintainable code. Specializing in responsive frontend experiences, high-throughput APIs, and reliable database systems.",
+          resumeUrl: data.resume_url || "/resume.pdf",
+          githubUrl: data.github_url || "",
+          linkedinUrl: data.linkedin_url || "",
+          instagramUrl: data.instagram_url || "",
+          twitterUrl: data.twitter_url || "",
+        });
+      }
+    }
+
+    loadSiteSettings();
+  }, []);
+
+  const socialLinks = [
+    { name: "GitHub", href: siteData.githubUrl, icon: GithubIcon },
+    { name: "LinkedIn", href: siteData.linkedinUrl, icon: LinkedinIcon },
+    { name: "Instagram", href: siteData.instagramUrl, icon: InstagramIcon },
+    { name: "X / Twitter", href: siteData.twitterUrl, icon: XTwitterIcon },
+  ].filter((link) => Boolean(link.href));
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -311,6 +358,9 @@ export default function HomePage() {
     };
   }, [mouseX, mouseY]);
 
+  // Split name dynamically into words (and append period to final word for styling)
+  const nameWords = siteData.name.trim().split(/\s+/);
+
   return (
     <div
       ref={containerRef}
@@ -324,7 +374,7 @@ export default function HomePage() {
         className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 py-12 md:py-20"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-          {/* Left Column: Heading, Continuous Animated Name, CTAs, & Socials */}
+          {/* Left Column: Heading, Dynamic Animated Name, CTAs, & Socials */}
           <div className="lg:col-span-7 text-left">
             <motion.p
               initial={{ opacity: 0, y: 15 }}
@@ -337,7 +387,6 @@ export default function HomePage() {
 
             {/* Continuous Ripple-Animated Name Header */}
             <div className="relative inline-block mb-3 select-none">
-              {/* Continuous Pulsing Backdrop Aura */}
               <motion.div
                 animate={{
                   scale: [0.95, 1.12, 0.95],
@@ -352,12 +401,13 @@ export default function HomePage() {
               />
 
               <h1 className="flex flex-wrap items-baseline gap-x-4 leading-[1.05]">
-                {["Busayo", "Ale."].map((word, wordIndex) => {
-                  const baseCharIndex = wordIndex === 0 ? 0 : 6;
+                {nameWords.map((word, wordIndex) => {
+                  const displayWord =
+                    wordIndex === nameWords.length - 1 ? `${word}.` : word;
                   return (
                     <span key={wordIndex} className="inline-flex">
-                      {word.split("").map((char, charIndex) => {
-                        const totalIndex = baseCharIndex + charIndex;
+                      {displayWord.split("").map((char, charIndex) => {
+                        const totalIndex = wordIndex * 6 + charIndex;
                         return (
                           <motion.span
                             key={charIndex}
@@ -393,7 +443,7 @@ export default function HomePage() {
               transition={{ duration: 0.7, delay: 0.3 }}
               className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-zinc-600 dark:text-zinc-400 mb-6 leading-tight"
             >
-              Full Stack Developer
+              {siteData.title}
             </motion.h2>
 
             <motion.p
@@ -402,7 +452,7 @@ export default function HomePage() {
               transition={{ duration: 0.7, delay: 0.4 }}
               className="text-base sm:text-lg text-zinc-600 dark:text-zinc-400 max-w-xl mb-8 font-light leading-relaxed"
             >
-              Architecting modern web applications with clean, maintainable code. Specializing in responsive frontend experiences, high-throughput APIs, and reliable database systems.
+              {siteData.tagline}
             </motion.p>
 
             {/* Action Buttons */}
@@ -422,7 +472,9 @@ export default function HomePage() {
 
               {/* Download CV */}
               <a
-                href="/resume.pdf"
+                href={siteData.resumeUrl}
+                target="_blank"
+                rel="noreferrer"
                 download="Busayo_Ale_CV.pdf"
                 className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-zinc-100/60 dark:bg-zinc-900/40 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white font-medium text-sm transition-all duration-200 backdrop-blur-md flex items-center justify-center gap-2 group"
               >
@@ -432,31 +484,33 @@ export default function HomePage() {
             </motion.div>
 
             {/* Social Links Row */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              className="flex items-center gap-3 pt-2"
-            >
-              <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 mr-2">
-                Connect:
-              </span>
-              {SOCIAL_LINKS.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={item.name}
-                    className="p-2.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-100/60 dark:bg-zinc-900/40 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all duration-200"
-                  >
-                    <Icon className="w-4 h-4" />
-                  </a>
-                );
-              })}
-            </motion.div>
+            {socialLinks.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                className="flex items-center gap-3 pt-2"
+              >
+                <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 mr-2">
+                  Connect:
+                </span>
+                {socialLinks.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={item.name}
+                      className="p-2.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-100/60 dark:bg-zinc-900/40 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all duration-200"
+                    >
+                      <Icon className="w-4 h-4" />
+                    </a>
+                  );
+                })}
+              </motion.div>
+            )}
           </div>
 
           {/* Right Column: Dev Workspace Snapshot */}
