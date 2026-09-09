@@ -18,7 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "Busayo - Full-Stack Developer",
+  title: "Busayo Ale - Full-Stack Developer",
   description:
     "I engineer high-performance web applications with precision and scale in mind. Specializing in modern JavaScript ecosystems and robust backend architectures.",
   keywords: [
