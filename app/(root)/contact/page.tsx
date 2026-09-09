@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, Copy, Check, Send, Loader2 } from "lucide-react";
 import { fadeInUp } from "@/data/portfolio";
@@ -10,9 +10,33 @@ export default function ContactPage() {
   const [copied, setCopied] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [status, setStatus] = useState<"idle" | "submitting" | "sent" | "error">("idle");
+  const [contactEmail, setContactEmail] = useState<string>("");
+
+  useEffect(() => {
+    async function fetchSiteSettings() {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("email")
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching contact email:", error);
+        return;
+      }
+
+      if (data?.email) {
+        setContactEmail(data.email);
+      }
+    }
+
+    fetchSiteSettings();
+  }, []);
 
   const handleCopyEmail = () => {
-    navigator.clipboard.writeText("busayo.ale@example.com");
+    if (!contactEmail) return;
+    navigator.clipboard.writeText(contactEmail);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
@@ -64,10 +88,12 @@ export default function ContactPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
             <motion.a
-              href="mailto:busayo.ale@example.com"
+              href={contactEmail ? `mailto:${contactEmail}` : "#"}
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-950 dark:hover:bg-white text-zinc-50 dark:text-zinc-950 font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2"
+              className={`w-full sm:w-auto px-8 py-3.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-950 dark:hover:bg-white text-zinc-50 dark:text-zinc-950 font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                !contactEmail ? "pointer-events-none opacity-50" : ""
+              }`}
             >
               <Mail className="w-4 h-4" />
               <span>Start Direct Discussion</span>
@@ -76,9 +102,10 @@ export default function ContactPage() {
             <motion.button
               type="button"
               onClick={handleCopyEmail}
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-zinc-100/60 dark:bg-zinc-900/60 text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-all duration-200 flex items-center justify-center gap-2"
+              disabled={!contactEmail}
+              whileHover={{ scale: contactEmail ? 1.04 : 1 }}
+              whileTap={{ scale: contactEmail ? 0.96 : 1 }}
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-zinc-100/60 dark:bg-zinc-900/60 text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {copied ? (
                 <Check className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />
