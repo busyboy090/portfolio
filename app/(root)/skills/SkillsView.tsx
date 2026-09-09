@@ -42,7 +42,7 @@ export default function SkillsView({ categories }: { categories: SkillCategoryIt
       {!hasAny ? (
         <div className="text-center py-16 text-zinc-500 text-sm font-light">No skills listed yet.</div>
       ) : (
-        <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="space-y-12">
+        <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="space-y-12 grid grid-cols-1 md:grid-cols-2 gap-12">
           {SECTION_ORDER.map((sectionKey) => {
             const items = categories.filter((c) => c.section === sectionKey);
             if (items.length === 0) return null;
