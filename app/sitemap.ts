@@ -30,7 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [settingsRes, projectsRes, workRes, eduRes, certRes, skillsRes] = await Promise.all([
     supabase.from("site_settings").select("updated_at").eq("id", 1),
     supabase.from("projects").select("updated_at").eq("published", true),
-    supabase.from("work_experience").select("updated_at"),
+    supabase.from("experience").select("updated_at"),
     supabase.from("education").select("updated_at"),
     supabase.from("certifications").select("updated_at"),
     supabase.from("skill_categories").select("updated_at"),
@@ -54,7 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     },
     {
-      url: `${SITE_URL}/work`,
+      url: `${SITE_URL}/projects`,
       lastModified: workLastModified,
       changeFrequency: "weekly",
       priority: 0.9,
