@@ -54,8 +54,8 @@ export default function ContactPage() {
     const supabase = createClient();
 
     const { error } = await supabase.from("messages").insert({
-      sender_name: form.name,
-      sender_email: form.email,
+      name: form.name,
+      email: form.email,
       subject: form.subject || "New portfolio inquiry",
       message: form.message,
     });

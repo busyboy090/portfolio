@@ -41,18 +41,20 @@ export interface ContactMessage {
 function fromRow(row: any): ContactMessage {
   return {
     id: row.id,
-    senderName: row.sender_name,
-    senderEmail: row.sender_email,
-    subject: row.subject,
-    message: row.message,
-    createdAt: new Date(row.created_at).toLocaleString(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }),
-    read: row.read,
-    replied: row.replied,
-    starred: row.starred,
-    archived: row.archived,
+    senderName: row.name ?? row.sender_name ?? "Anonymous",
+    senderEmail: row.email ?? row.sender_email ?? "",
+    subject: row.subject ?? "(No Subject)",
+    message: row.message ?? "",
+    createdAt: row.created_at
+      ? new Date(row.created_at).toLocaleString(undefined, {
+          dateStyle: "medium",
+          timeStyle: "short",
+        })
+      : "",
+    read: Boolean(row.read),
+    replied: Boolean(row.replied),
+    starred: Boolean(row.starred),
+    archived: Boolean(row.archived),
   };
 }
 
