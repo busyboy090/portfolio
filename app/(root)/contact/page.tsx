@@ -104,7 +104,7 @@ export default function ContactPage() {
               rel="noopener noreferrer"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
-              className={`w-full sm:w-auto px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-sm ${
+              className={`w-full sm:w-auto px-8 py-3.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-sm ${
                 !whatsappNumber ? "pointer-events-none opacity-50" : ""
               }`}
             >
